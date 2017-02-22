@@ -1,5 +1,5 @@
 ## Process this file with automake to create Makefile.in
-# Copyright 1997-1998, 2005-2011 Free Software Foundation, Inc.
+# Copyright 1997-1998, 2005-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,22 +22,22 @@ AM_CFLAGS = $(WARN_CFLAGS) $(WERROR_CFLAGS)
 AM_LDFLAGS = $(IGNORE_UNUSED_LIBRARIES_CFLAGS)
 LDADD = ../lib/libgreputils.a $(LIBINTL) ../lib/libgreputils.a
 
-# Remove this definition once the failing test passes.
-XFAIL_TESTS = \
-  word-delim-multibyte \
-  grep-dir
+XFAIL_TESTS =
 
 # Equivalence classes are only supported when using the system
 # matcher (which means only with glibc).
 if USE_INCLUDED_REGEX
 XFAIL_TESTS += equiv-classes
 endif
-XFAIL_TESTS += turkish-I
 
 TESTS =						\
   backref					\
   backref-multibyte-slow			\
   backref-word					\
+  backslash-s-and-repetition-operators		\
+  backslash-s-vs-invalid-multitype		\
+  big-hole					\
+  big-match					\
   bogus-wctob					\
   bre						\
   case-fold-backref				\
@@ -45,11 +45,18 @@ TESTS =						\
   case-fold-char-class				\
   case-fold-char-range				\
   case-fold-char-type				\
+  case-fold-titlecase				\
   char-class-multibyte				\
+  char-class-multibyte2				\
+  context-0					\
+  count-newline					\
+  dfa-coverage					\
   dfa-heap-overrun				\
   dfaexec-multibyte				\
   empty						\
-  equiv-classes                                 \
+  empty-line					\
+  epipe						\
+  equiv-classes					\
   ere						\
   euc-mb					\
   fedora					\
@@ -60,25 +67,46 @@ TESTS =						\
   grep-dev-null					\
   grep-dir					\
   help-version					\
-  ignore-mmap					\
-  in-eq-out-infloop                             \
+  in-eq-out-infloop				\
   include-exclude				\
-  inconsistent-range                            \
+  inconsistent-range				\
+  invalid-multibyte-infloop			\
   khadafy					\
+  long-line-vs-2GiB-read			\
+  max-count-overread				\
   max-count-vs-context				\
+  mb-non-UTF8-performance			\
+  multibyte-white-space				\
+  multiple-begin-or-end-line			\
+  null-byte					\
+  empty-line-mb					\
   unibyte-bracket-expr				\
+  unibyte-negated-circumflex			\
   high-bit-range				\
   options					\
   pcre						\
   pcre-abort					\
+  pcre-infloop					\
+  pcre-invalid-utf8-input			\
+  pcre-utf8					\
+  pcre-w					\
+  pcre-wx-backref				\
   pcre-z					\
+  posix-bracket					\
   prefix-of-multibyte				\
+  r-dot						\
+  repetition-overflow				\
   reversed-range-endpoints			\
+  skip-device					\
   sjis-mb					\
   spencer1					\
   spencer1-locale				\
   status					\
+  surrogate-pair				\
+  symlink					\
+  turkish-eyes					\
   turkish-I					\
+  turkish-I-without-dot				\
   warn-char-classes				\
   word-delim-multibyte				\
   word-multi-file				\
@@ -106,7 +134,7 @@ TESTS_ENVIRONMENT =				\
   tmp__=$$TMPDIR; test -d "$$tmp__" || tmp__=.;	\
   TMPDIR=$$tmp__; export TMPDIR;		\
 						\
-  if test -n "$BASH_VERSION" || (eval "export v=x") 2>/dev/null; then \
+  if test -n "$$BASH_VERSION" || (eval "export v=x") 2>/dev/null; then \
     export_with_values () { export "$$@"; };		\
   else							\
     export_with_values ()				\
@@ -123,9 +151,9 @@ TESTS_ENVIRONMENT =				\
   fi;							\
 						\
   export_with_values				\
-  VERSION='$(VERSION)'                          \
-  LOCALE_FR='$(LOCALE_FR)'                      \
-  LOCALE_FR_UTF8='$(LOCALE_FR_UTF8)'            \
+  VERSION='$(VERSION)'				\
+  LOCALE_FR='$(LOCALE_FR)'			\
+  LOCALE_FR_UTF8='$(LOCALE_FR_UTF8)'		\
   AWK=$(AWK)					\
   GREP_OPTIONS=''				\
   LC_ALL=C					\

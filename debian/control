@@ -4,8 +4,8 @@ Priority: required
 Maintainer: Pexip AS <packaging@pexip.com>
 XSBC-Pexip-Original-Maintainer: Anibal Monsalve Salazar <anibal@debian.org>
 XSBC-Pexip-Original-Uploaders: Santiago Ruano Rincón <santiago@debian.org>
-Standards-Version: 3.9.2
-Build-Depends: autotools-dev, debhelper (>= 7), gettext, libpcre3-dev (>= 7.7)
+Standards-Version: 3.9.5
+Build-Depends: autotools-dev, cdbs, debhelper (>= 7), dh-autoreconf, gettext, libpcre3-dev (>= 1:8.31-3), texinfo
 Homepage: http://www.gnu.org/software/grep/
 Vcs-Git: git://git.debian.org/git/collab-maint/grep.git
 Vcs-Browser: http://git.debian.org/?p=collab-maint/grep.git
@@ -13,6 +13,7 @@ XS-Pexip-Upstream: http://ftp.debian.org/debian/ jessie
 
 Package: grep
 Architecture: any
+Multi-Arch: foreign
 Essential: yes
 Pre-Depends: ${shlibs:Depends}
 Depends: ${misc:Depends}, dpkg (>= 1.15.4) | install-info

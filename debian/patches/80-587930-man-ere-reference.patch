@@ -9,7 +9,7 @@
  This is highly experimental and
  .B "grep \-P"
  may warn of unimplemented features.
-@@ -602,7 +602,7 @@
+@@ -591,7 +591,7 @@
  .PP
  .B grep
  understands three different versions of regular expression syntax:
@@ -18,9 +18,20 @@
  .RB "\s-1GNU\s0\ " grep ,
  there is no difference in available functionality between basic and
  extended syntaxes.
---- a/doc/grep.info	2011-07-12 18:42:55.000000000 -0400
-+++ b/doc/grep.info	2011-07-12 18:47:23.000000000 -0400
-@@ -730,7 +730,7 @@
+@@ -599,8 +599,8 @@
+ The following description applies to extended regular expressions;
+ differences for basic regular expressions are summarized afterwards.
+ Perl regular expressions give additional functionality, and are
+-documented in pcresyntax(3) and pcrepattern(3), but may not be
+-available on every system.
++documented in pcresyntax(3) and pcrepattern(3), but only work if pcre
++is available in the system.
+ .PP
+ The fundamental building blocks are the regular expressions
+ that match a single character.
+--- a/doc/grep.info
++++ b/doc/grep.info
+@@ -783,7 +783,7 @@
  
  `-P'
  `--perl-regexp'
@@ -29,12 +40,12 @@
       highly experimental and `grep -P' may warn of unimplemented
       features.
  
-@@ -751,7 +751,7 @@
+@@ -804,7 +804,7 @@
  Regular expressions are constructed analogously to arithmetic
  expressions, by using various operators to combine smaller expressions.
  `grep' understands three different versions of regular expression
 -syntax: "basic," (BRE) "extended" (ERE) and "perl".  In GNU `grep',
 +syntax: "basic," (BRE) "extended" (ERE) and "perl" (PERL).  In GNU `grep',
- there is no difference in available functionality between basic and
+ there is no difference in available functionality between the basic and
  extended syntaxes.  In other implementations, basic regular expressions
  are less powerful.  The following description applies to extended

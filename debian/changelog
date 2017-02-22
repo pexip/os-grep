@@ -1,3 +1,202 @@
+grep (2.20-4.1pexip1) pexip; urgency=low
+
+  * Migrate to Jessie
+
+ -- John-Mark Bell <jmb@pexip.com>  Wed, 22 Feb 2017 19:28:54 +0000
+
+grep (2.20-4.1) unstable; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Fix CVE-2015-1345: buffer overrun in src/kwset.c (closes: #776039).
+
+ -- Michael Gilbert <mgilbert@debian.org>  Mon, 26 Jan 2015 02:56:14 +0000
+
+grep (2.20-4) unstable; urgency=medium
+
+  * d/patches/05-grep-wrapper-sh.patch: egrep and fgrep wrap scripts use sh
+    instead of bash. The patch also removes the possible call ./grep (looking
+    for it in the working directory) (Closes: #762427, #762917).
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Fri, 03 Oct 2014 12:09:05 +0200
+
+grep (2.20-3) unstable; urgency=high
+
+  * d/patches/0001-grep-P-invalid-utf8-non-matching-debian.patch From
+    upstream: -P now treats invalid UTF-8 characters as non matching.
+    Thanks to Paul Eggert. (Closes: #758105). 
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Wed, 10 Sep 2014 13:10:32 +0200
+
+grep (2.20-2) unstable; urgency=low
+
+  * Add 85-412370-F-x-documentation.patch to d/patches/series
+  * d/rules: 
+    - Correct hardening CPPFLAGS. Thanks to Simon Ruderich.
+      (Closes: #758069)
+    - Set DEB_MAKE_CHECK_TARGET = check to run make check after build.
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Thu, 14 Aug 2014 17:40:36 +0200
+
+grep (2.20-1) unstable; urgency=low
+
+  * New upstream release.
+  * Improve documentation about -F and -x. Thanks to Justin Pryzby.
+    85-412370-F-x-documentation.patch (Closes: #412370)
+  * Add d/upstream/signing-key.asc and updated d/watch to verify upstream
+    signature.
+  * d/rules: Enable all hardening options. Patch by Markus Waldeck.
+  * Add 0001-build-avoid-Wstack-protector.patch. See:
+    http://bugs.gnu.org/17793
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Wed, 13 Aug 2014 16:49:29 +0200
+
+grep (2.18-2) unstable; urgency=medium
+
+  * Depends on pcre3 >= 1:8.31-3. Since that revision, pcre3 enables to 
+    compile JIT regexes (Closes: 736919) 
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Tue, 15 Apr 2014 19:40:35 +0200
+
+grep (2.18-1) unstable; urgency=low
+
+  * New upstream release
+  * Move to CDBS. Jointly with included patches, makes grep build twice in a
+    row (Closes: #736977) 
+  * d/patches/
+    - 03-397262-dlopen-pcre.patch: removed unneeded changes in configure
+    - 99-autotools-changes.patch: included modifications made by autotools
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Thu, 06 Mar 2014 22:25:25 +0100
+
+grep (2.16-1) unstable; urgency=low
+
+  * New upstream release.
+  * d/patches, Removed not longer needed patches:
+    - 85-automake-warnings-bc9c23a4350598db4ec04225e1e0194a7b17175d.patch
+    - 90-729581-multibyte-s.patch
+    - 91-P-regression-9a9b4c59babc60e15a79cf7db8167d42e68e44b9.patch
+    - 92-730472-PCRE-no-check-UTF8.patch
+  * Bump Standards-Version to 3.9.5
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Sat, 18 Jan 2014 13:41:31 +0100
+
+grep (2.15-2) unstable; urgency=high
+
+  * d/patches/92-730472-PCRE-no-check-UTF8.patch flags PCRE with
+    PCRE_NO_UTF8_CHECK instead of PCRE_UTF8 to avoid checking if input is 
+    UTF8 valid (Closes: #730472).
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Wed, 27 Nov 2013 23:39:35 +0100
+
+grep (2.15-1) unstable; urgency=high
+
+  * New upstream release. 
+  * d/patches/
+    - 85-automake-warnings-bc9c23a4350598db4ec04225e1e0194a7b17175d.patch
+      "avoid automake deprecation warning re ACLOCAL_AMFLAGS"
+    - 90-729581-multibyte-s.patch fixes a regresion bug, the \s 
+      was not working on UTF-8 systems. (Closes: #729581)
+    - 91-P-regression-9a9b4c59babc60e15a79cf7db8167d42e68e44b9.patch
+      improves handling of PCRE errors and invalid UTF-8 inputs
+  * Trying autoreconf again: disabling autopoint, autoheader and libtoolize.
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Sun, 24 Nov 2013 17:53:03 +0100
+
+grep (2.15~pre-2.14.54-37f7-1) experimental; urgency=low
+  
+  * New upstream release
+  * d/control: 
+    - Multi-Arch: foreign (Closes: #726391)
+    - Removed Build-deps: dh-autoreconf
+    - Added Build-deps: texinfo
+  * Updated d/patches/03-397262-dlopen-pcre.patch
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Sat, 26 Oct 2013 01:43:19 +0200
+
+grep (2.14-4) unstable; urgency=low
+
+  * Making debian/copyright machine-readable, according to the specification
+    of version 1.0
+  * d/patches/95-sS-multibyte.patch: Fixes matching of multi-byte white spaces
+  * debian/rules: using dh_autoreconf tools
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Wed, 02 Oct 2013 15:00:06 +0200
+
+grep (2.14-3) unstable; urgency=low
+
+  * Updating 80-587930-man-ere-reference.patch to improve documentation 
+    regarding -P (Closes: #203109)
+  * Correcting a formating issue in grep.in.1. Thanks to David Prévot
+    (Closes: #692760)
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Sun, 11 Aug 2013 18:17:21 +0200
+
+grep (2.14-2) unstable; urgency=low
+
+  * Fixing bug in 03-397262-dlopen-pcre.patch: LIB instead of LIBS. Thanks
+    to Bjarni Ingi Gislason. (Closes: #693917)
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Thu, 23 May 2013 11:02:34 +0200
+
+grep (2.14-1) unstable; urgency=low
+
+  * [fb48cde] Imported Upstream version 2.14
+    Merged upstream:
+      90-672240-exclude.patch
+    Update man page
+      Closes: #678652
+  * Standards Version is 3.9.4
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Thu, 08 Nov 2012 13:06:00 +1100
+
+grep (2.12-2) unstable; urgency=low
+
+  * Updated debian/watch to match .tar.xz files 
+  * Added 90-672240-exclude.patch so that --exclude excludes again 
+    (Closes: #672240)
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Sun, 13 May 2012 14:08:01 +0200
+
+grep (2.12-1) unstable; urgency=low
+
+  * New upstream version 2.12
+    Merged upstream:
+      82-669084-stdin-exemption.patch
+      81-668585-excluded_file_name.patch
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Tue, 08 May 2012 11:41:50 +1000
+
+grep (2.11-3) unstable; urgency=low
+
+  * --devices=ACTION (-D) no longer affects stdin 
+    Add 82-669084-stdin-exemption.patch
+    Closes: #669084
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Tue, 17 Apr 2012 22:49:08 +1000
+
+grep (2.11-2) unstable; urgency=low
+
+  * Don't segfault with -r --exclude-dir and no file operand
+    Add 81-668585-excluded_file_name.patch
+    Patch by Allan McRae
+    Closes: #668585
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Fri, 13 Apr 2012 18:29:01 +1000
+
+grep (2.11-1) unstable; urgency=low
+
+  * New upstream version 2.11
+    Closes: #668534
+    Fix "input file == output file detection and -q"
+    Closes: #651617
+  * Enable hardened build flags
+    Patch by Moritz Muehlenhoff
+    Closes: #655502
+  * Drop 55-185208-bigfile.patch as it doesn't work
+  * Standards Version is 3.9.3
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Fri, 13 Apr 2012 09:20:46 +1000
+
 grep (2.10-1pexip1) pexip; urgency=low
 
   * Prepare Pexip packaging

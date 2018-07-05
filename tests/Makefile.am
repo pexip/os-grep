@@ -1,5 +1,5 @@
 ## Process this file with automake to create Makefile.in
-# Copyright 1997-1998, 2005-2014 Free Software Foundation, Inc.
+# Copyright 1997-1998, 2005-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,24 +14,56 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+TEST_EXTENSIONS = .sh .pl
+
+if HAVE_PERL
+TESTSUITE_PERL = $(PERL)
+else
+TESTSUITE_PERL = $(SHELL) $(srcdir)/no-perl
+endif
+
+# Options passed to the perl invocations running the perl test scripts.
+TESTSUITE_PERL_OPTIONS = -w -I$(srcdir) -MCoreutils -MCuSkip
+# '$f' is set by the Automake-generated test harness to the path of the
+# current test script stripped of VPATH components, and is used by the
+# CuTmpdir module to determine the name of the temporary files to be
+# used.  Note that $f is a shell variable, not a make macro, so the use
+# of '$$f' below is correct, and not a typo.
+TESTSUITE_PERL_OPTIONS += -M"CuTmpdir qw($$f)"
+
+SH_LOG_COMPILER = $(SHELL)
+PL_LOG_COMPILER = $(TESTSUITE_PERL) $(TESTSUITE_PERL_OPTIONS)
+
 check_PROGRAMS = get-mb-cur-max
-AM_CPPFLAGS = -I$(top_builddir)/lib -I$(top_srcdir)/lib
+AM_CPPFLAGS = -I$(top_builddir)/lib -I$(top_srcdir)/lib \
+  -I$(top_srcdir)/src
 AM_CFLAGS = $(WARN_CFLAGS) $(WERROR_CFLAGS)
 
 # Tell the linker to omit references to unused shared libraries.
 AM_LDFLAGS = $(IGNORE_UNUSED_LIBRARIES_CFLAGS)
 LDADD = ../lib/libgreputils.a $(LIBINTL) ../lib/libgreputils.a
 
-XFAIL_TESTS =
+# The triple-backref test is expected to fail with both the system
+# matcher (i.e., with glibc) and with the included matcher.
+# Both matchers need to be fixed.
+# FIXME-2015: Remove this once the glibc and gnulib bugs are fixed.
+XFAIL_TESTS = triple-backref
 
 # Equivalence classes are only supported when using the system
 # matcher (which means only with glibc).
+# The included matcher needs to be fixed.
+# FIXME-2015: Remove this once the gnulib bug is fixed.
 if USE_INCLUDED_REGEX
 XFAIL_TESTS += equiv-classes
+else
+# The backslash-alt test fails for glibc, which needs to be fixed.
+# FIXME-2015: Remove this once the glibc bug is fixed.
+XFAIL_TESTS += backref-alt
 endif
 
 TESTS =						\
   backref					\
+  backref-alt					\
   backref-multibyte-slow			\
   backref-word					\
   backslash-s-and-repetition-operators		\
@@ -40,6 +72,7 @@ TESTS =						\
   big-match					\
   bogus-wctob					\
   bre						\
+  c-locale					\
   case-fold-backref				\
   case-fold-backslash-w				\
   case-fold-char-class				\
@@ -52,42 +85,56 @@ TESTS =						\
   count-newline					\
   dfa-coverage					\
   dfa-heap-overrun				\
+  dfa-infloop					\
   dfaexec-multibyte				\
   empty						\
   empty-line					\
+  empty-line-mb					\
+  encoding-error				\
   epipe						\
   equiv-classes					\
   ere						\
   euc-mb					\
+  false-match-mb-non-utf8			\
   fedora					\
   fgrep-infloop					\
   file						\
+  filename-lineno.pl				\
   fmbtest					\
   foad1						\
   grep-dev-null					\
+  grep-dev-null-out				\
   grep-dir					\
   help-version					\
+  high-bit-range				\
   in-eq-out-infloop				\
   include-exclude				\
   inconsistent-range				\
+  initial-tab					\
   invalid-multibyte-infloop			\
   khadafy					\
+  kwset-abuse					\
   long-line-vs-2GiB-read			\
+  long-pattern-perf				\
+  match-lines					\
   max-count-overread				\
   max-count-vs-context				\
+  mb-dot-newline				\
+  mb-non-UTF8-overrun				\
   mb-non-UTF8-performance			\
   multibyte-white-space				\
   multiple-begin-or-end-line			\
   null-byte					\
-  empty-line-mb					\
-  unibyte-bracket-expr				\
-  unibyte-negated-circumflex			\
-  high-bit-range				\
   options					\
   pcre						\
   pcre-abort					\
+  pcre-context					\
+  pcre-count					\
   pcre-infloop					\
+  pcre-invalid-utf8-infloop			\
   pcre-invalid-utf8-input			\
+  pcre-jitstack					\
+  pcre-o					\
   pcre-utf8					\
   pcre-w					\
   pcre-wx-backref				\
@@ -97,31 +144,47 @@ TESTS =						\
   r-dot						\
   repetition-overflow				\
   reversed-range-endpoints			\
-  skip-device					\
   sjis-mb					\
+  skip-device					\
+  skip-read					\
   spencer1					\
   spencer1-locale				\
   status					\
   surrogate-pair				\
   symlink					\
-  turkish-eyes					\
+  triple-backref				\
   turkish-I					\
   turkish-I-without-dot				\
+  turkish-eyes					\
+  two-chars					\
+  two-files					\
+  unibyte-binary				\
+  unibyte-bracket-expr				\
+  unibyte-negated-circumflex			\
+  utf8-bracket					\
   warn-char-classes				\
   word-delim-multibyte				\
   word-multi-file				\
-  yesno
+  word-multibyte				\
+  write-error-msg				\
+  yesno						\
+  z-anchor-newline
 
 EXTRA_DIST =					\
   $(TESTS)					\
   bre.awk					\
   bre.tests					\
+  Coreutils.pm					\
+  CuSkip.pm					\
+  CuTmpdir.pm					\
+  envvar-check					\
   ere.awk					\
   ere.tests					\
   init.cfg					\
   init.sh					\
   khadafy.lines					\
   khadafy.regexp				\
+  no-perl					\
   spencer1.awk					\
   spencer1.tests				\
   spencer1-locale.awk
@@ -131,7 +194,9 @@ EXTRA_DIST =					\
 MALLOC_PERTURB_ = 1
 
 TESTS_ENVIRONMENT =				\
-  tmp__=$$TMPDIR; test -d "$$tmp__" || tmp__=.;	\
+  tmp__=$${TMPDIR-/tmp};			\
+  test -d "$$tmp__" && test -w "$$tmp__" || tmp__=.;	\
+  . $(srcdir)/envvar-check;			\
   TMPDIR=$$tmp__; export TMPDIR;		\
 						\
   if test -n "$$BASH_VERSION" || (eval "export v=x") 2>/dev/null; then \
@@ -149,6 +214,14 @@ TESTS_ENVIRONMENT =				\
       done;						\
     };							\
   fi;							\
+							\
+  : 'Test egrep/fgrep help if they use our grep.';	\
+  grep=`echo grep | sed -e '$(transform)'` || exit;	\
+  if test "$$grep" = grep; then				\
+    built_programs='grep egrep fgrep';			\
+  else							\
+    built_programs='grep';				\
+  fi;							\
 						\
   export_with_values				\
   VERSION='$(VERSION)'				\
@@ -160,7 +233,7 @@ TESTS_ENVIRONMENT =				\
   abs_top_builddir='$(abs_top_builddir)'	\
   abs_top_srcdir='$(abs_top_srcdir)'		\
   abs_srcdir='$(abs_srcdir)'			\
-  built_programs='grep egrep fgrep'		\
+  built_programs="$$built_programs"		\
   srcdir='$(srcdir)'				\
   top_srcdir='$(top_srcdir)'			\
   CC='$(CC)'					\

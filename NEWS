@@ -1,5 +1,283 @@
 GNU grep NEWS                                    -*- outline -*-
 
+* Noteworthy changes in release 2.27 (2016-12-06) [stable]
+
+** Bug fixes
+
+  grep no longer reports a false match in a multibyte, non-UTF8 locale
+  like zh_CN.gb18030, with a regular expression like ".*7" that just
+  happens to match the 4-byte representation of gb18030's \uC9, the
+  final byte of which is the digit "7".
+  [bug introduced in grep-2.19]
+
+  grep by default now reads all of standard input if it is a pipe,
+  even if this cannot affect grep's output or exit status.  This works
+  better with nonportable scripts that run "PROGRAM | grep PATTERN
+  >/dev/null" where PROGRAM dies when writing into a broken pipe.
+  [bug introduced in grep-2.26]
+
+  grep no longer mishandles ranges in nontrivial unibyte locales.
+  [bug introduced in grep-2.26]
+
+  grep -P no longer attempts multiline matches.  This works more
+  intuitively with unusual patterns, and means that grep -Pz no longer
+  rejects patterns containing ^ and $ and works when combined with -x.
+  [bugs introduced in grep-2.23] A downside is that grep -P is now
+  significantly slower, albeit typically still faster than pcregrep.
+
+  grep -m0 -L PAT FILE now outputs "FILE".  [bug introduced in grep-2.5]
+
+  To output ':' and tab-align the following character C, grep -T no
+  longer outputs tab-backspace-':'-C, an approach that has problems if
+  run inside an Emacs shell window.  [bug introduced in grep-2.5.2]
+
+  grep -T now uses worst-case widths of line numbers and byte offsets
+  instead of guessing widths that might not work with larger files.
+  [bug introduced in grep-2.5.2]
+
+  grep's use of getprogname no longer causes a build failure on HP-UX.
+
+** Improvements
+
+  grep no longer reads the input in a few more cases when it is easy
+  to see that matching cannot succeed, e.g., 'grep -f /dev/null'.
+
+
+* Noteworthy changes in release 2.26 (2016-10-02) [stable]
+
+** Bug fixes
+
+  Grep no longer omits output merely because it follows an output line
+  suppressed due to encoding errors.  [bug introduced in grep-2.21]
+
+  In the Shift_JIS locale, grep no longer mistakenly matches in the
+  middle of a multibyte character. [bug present since "the beginning"]
+
+** Improvements
+
+  grep can be much faster now when standard output is /dev/null.
+
+  grep -F is now typically much faster when many patterns are given,
+  as it now uses the Aho-Corasick algorithm instead of the
+  Commentz-Walter algorithm in that case.
+
+  grep -iF is typically much faster in a multibyte locale, if the
+  pattern and its case counterparts contain only single byte characters.
+
+  grep with complicated expressions (e.g., back-references) and without
+  -i now uses the regex fastmap for better performance.
+
+  In multibyte locales, grep now handles leading "." in patterns more
+  efficiently.
+
+  grep now prints a "FILENAME:LINENO: " prefix when diagnosing an
+  invalid regular expression that was read from an '-f'-specified file.
+
+
+* Noteworthy changes in release 2.25 (2016-04-21) [stable]
+
+** Bug fixes
+
+  In the C or POSIX locale, grep now treats all bytes as valid
+  characters even if the C runtime library says otherwise.  The
+  revised behavior is more compatible with the original intent of
+  POSIX, and the next release of POSIX will likely make this official.
+  [bug introduced in grep-2.23]
+
+  grep -Pz no longer mistakenly diagnoses patterns like [^a] that use
+  negated character classes. [bug introduced in grep-2.24]
+
+  grep -oz now uses null bytes, not newlines, to terminate output lines.
+  [bug introduced in grep-2.5]
+
+** Improvements
+
+  grep now outputs details more consistently when reporting a write error.
+  E.g., "grep: write error: No space left on device" rather than just
+  "grep: write error".
+
+
+* Noteworthy changes in release 2.24 (2016-03-10) [stable]
+
+** Bug fixes
+
+  grep -z would match strings it should not.  To trigger the bug, you'd
+  have to use a regular expression including an anchor (^ or $) and a
+  feature like a range or a backreference, causing grep to forego its DFA
+  matcher and resort to using re_search.  With a multibyte locale, that
+  matcher could mistakenly match a string containing a newline.
+  For example, this command:
+    printf 'a\nb\0' | LC_ALL=en_US.utf-8 grep -z '^[a-b]*b'
+  would mistakenly match and print all four input bytes.  After the fix,
+  there is no match, as expected.
+  [bug introduced in grep-2.7]
+
+  grep -Pz now diagnoses attempts to use patterns containing ^ and $,
+  instead of mishandling these patterns.  This problem seems to be
+  inherent to the PCRE API; removing this limitation is on PCRE's
+  maint/README wish list.  Patterns can continue to match literal ^
+  and $ by escaping them with \ (now needed even inside [...]).
+  [bug introduced in grep-2.5]
+
+
+* Noteworthy changes in release 2.23 (2016-02-04) [stable]
+
+** Bug fixes
+
+  Binary files are now less likely to generate diagnostics and more
+  likely to yield text matches.  grep now reports "Binary file FOO
+  matches" and suppresses further output instead of outputting a line
+  containing an encoding error; hence grep can now report matching text
+  before a later binary match.  Formerly, grep reported FOO to be
+  binary when it found an encoding error in FOO before generating
+  output for FOO, which meant it never reported both matching text and
+  matching binary data; this was less useful for searching text
+  containing encoding errors in non-matching lines.
+  [bug introduced in grep-2.21]
+
+  grep -c no longer stops counting when finding binary data.
+  [bug introduced in grep-2.21]
+
+  grep no longer outputs encoding errors in unibyte locales.
+  For example, if the byte '\x81' is not a valid character in a
+  unibyte locale, grep treats the byte as binary data.
+  [bug introduced in grep-2.21]
+
+  grep -oP is no longer susceptible to an infinite loop when processing
+  invalid UTF8 just before a match.
+  [bug introduced in grep-2.22]
+
+  --exclude and related options are now matched against trailing
+  parts of command-line arguments, not against the entire arguments.
+  This partly reverts the --exclude-related change in 2.22.
+  [bug introduced in grep-2.22]
+
+  --line-buffer is no longer ineffective when combined with -l.
+  [bug introduced in grep-2.5]
+
+  -xw is now equivalent to -x more consistently, with -P and with backrefs.
+  [bug only partially fixed in grep-2.19]
+
+
+* Noteworthy changes in release 2.22 (2015-11-01) [stable]
+
+** Improvements
+
+  Performance has improved for patterns containing very long strings,
+  reducing preprocessing time for an N-byte regexp from O(N^2) to
+  only slightly superlinear for most patterns.  Before, a command like
+  the following would take over a minute, but now, it takes less than
+  a second:
+  : | grep -f <(seq -s '' 99999)
+
+  When building grep, 'configure' now uses PCRE's pkg-config module for
+  configuration information, rather than attempting to guess it by hand.
+
+** Bug fixes
+
+  A DFA matcher bug made this command mistakenly print its input line:
+    echo axb | grep -E '^x|x$'
+  Likewise for this equivalent command:
+    echo axb | grep -e '^x' -e 'x$'
+  [bug introduced in grep-2.19 ]
+
+  grep no longer reads from uninitialized memory or from beyond the end
+  of the heap-allocated input buffer.  This fix addressed CVE-2015-1345.
+  [bug introduced in grep-2.19 ]
+
+  With -z, '.' and '[^x]' in a pattern now consistently match newline.
+  Previously, they sometimes matched newline, and sometimes did not.
+  [bug introduced in grep-2.4]
+
+  When the JIT stack is exhausted, grep -P now grows the stack rather
+  than reporting an internal PCRE error.
+
+  'grep -D skip PATTERN FILE' no longer hangs if FILE is a fifo.
+  [bug introduced in grep-2.12]
+
+  --exclude and related options are now matched against entire
+  command-line arguments, not against command-line components.
+  [bug introduced in grep-2.6]
+
+  Fix performance degradation of grep -Fw in unibyte locales.
+  [bug introduced in grep-2.19 ]
+
+
+* Noteworthy changes in release 2.21 (2014-11-23) [stable]
+
+** Improvements
+
+  Performance has been greatly improved for searching files containing
+  holes, on platforms where lseek's SEEK_DATA flag works efficiently.
+
+  Performance has improved for rejecting data that cannot match even
+  the first part of a nontrivial pattern.
+
+  Performance has improved for very long strings in patterns.
+
+  If a file contains data improperly encoded for the current locale,
+  and this is discovered before any of the file's contents are output,
+  grep now treats the file as binary.
+
+  grep -P no longer reports an error and exits when given invalid UTF-8 data.
+  Instead, it considers the data to be non-matching.
+
+** Bug fixes
+
+  grep no longer mishandles patterns that contain \w or \W in multibyte
+  locales.
+
+  grep would fail to count newlines internally when operating in non-UTF8
+  multibyte locales, leading it to print potentially many lines that did
+  not match.  E.g., the command, "seq 10 | env LC_ALL=zh_CN src/grep -n .."
+  would print this:
+  1:1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+  10
+  implying that the match, "10" was on line 1.
+  [bug introduced in grep-2.19]
+
+  grep -F -x -o no longer prints an extra newline for each match.
+  [bug introduced in grep-2.19]
+
+  grep in a non-UTF8 multibyte locale could mistakenly match in the middle
+  of a multibyte character when using a '^'-anchored alternate in a pattern,
+  leading it to print non-matching lines.  [bug present since "the beginning"]
+
+  grep -F Y no longer fails to match in non-UTF8 multibyte locales like
+  Shift-JIS, when the input contains a 2-byte character, XY, followed by
+  the single-byte search pattern, Y.  grep would find the first, middle-
+  of-multibyte matching "Y", and then mistakenly advance an internal
+  pointer one byte too far, skipping over the target "Y" just after that.
+  [bug introduced in grep-2.19]
+
+  grep -E rejected unmatched ')', instead of treating it like '\)'.
+  [bug present since "the beginning"]
+
+  On NetBSD, grep -r no longer reports "Inappropriate file type or format"
+  when refusing to follow a symbolic link.
+  [bug introduced in grep-2.12]
+
+** Changes in behavior
+
+  The GREP_OPTIONS environment variable is now obsolescent, and grep
+  now warns if it is used.  Please use an alias or script instead.
+
+  In locales with multibyte character encodings other than UTF-8,
+  grep -P now reports an error and exits instead of misbehaving.
+
+  When searching binary data, grep now may treat non-text bytes as
+  line terminators.  This can boost performance significantly.
+
+  grep -z no longer automatically treats the byte '\200' as binary data.
+
 * Noteworthy changes in release 2.20 (2014-06-03) [stable]
 
 ** Bug fixes
@@ -766,7 +1044,7 @@ necessary to track the evolution of the regex package, and since
 I was changing it anyway I decided to do a general cleanup.
 
 ========================================================================
-Copyright (C) 1992, 1997-2002, 2004-2014 Free Software Foundation, Inc.
+Copyright (C) 1992, 1997-2002, 2004-2016 Free Software Foundation, Inc.
 
   Copying and distribution of this file, with or without modification,
   are permitted in any medium without royalty provided the copyright

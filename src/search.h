@@ -1,5 +1,5 @@
 /* search.c - searching subroutines using dfa, kwset and regex for grep.
-   Copyright 1992, 1998, 2000, 2007, 2009-2014 Free Software Foundation, Inc.
+   Copyright 1992, 1998, 2000, 2007, 2009-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,11 +28,16 @@
 #include <regex.h>
 
 #include "system.h"
-#include "error.h"
 #include "grep.h"
 #include "dfa.h"
 #include "kwset.h"
 #include "xalloc.h"
+#include "localeinfo.h"
+
+_GL_INLINE_HEADER_BEGIN
+#ifndef SEARCH_INLINE
+# define SEARCH_INLINE _GL_INLINE
+#endif
 
 /* This must be a signed type.  Each value is the difference in the size
    of a character (in bytes) induced by converting to lower case.
@@ -41,15 +46,13 @@
 typedef signed char mb_len_map_t;
 
 /* searchutils.c */
-extern void kwsinit (kwset_t *);
-
-extern char *mbtoupper (char const *, size_t *, mb_len_map_t **);
-extern void build_mbclen_cache (void);
+extern kwset_t kwsinit (bool);
 extern ptrdiff_t mb_goback (char const **, char const *, char const *);
 extern wint_t mb_prev_wc (char const *, char const *, char const *);
 extern wint_t mb_next_wc (char const *, char const *);
 
 /* dfasearch.c */
+extern struct localeinfo localeinfo;
 extern void GEAcompile (char const *, size_t, reg_syntax_t);
 extern size_t EGexecute (char const *, size_t, size_t *, char const *);
 
@@ -60,5 +63,18 @@ extern size_t Fexecute (char const *, size_t, size_t *, char const *);
 /* pcresearch.c */
 extern void Pcompile (char const *, size_t);
 extern size_t Pexecute (char const *, size_t, size_t *, char const *);
+
+/* Return the number of bytes in the character at the start of S, which
+   is of size N.  N must be positive.  MBS is the conversion state.
+   This acts like mbrlen, except it returns 1 when mbrlen would return 0,
+   and it is typically faster because of the cache.  */
+SEARCH_INLINE size_t
+mb_clen (char const *s, size_t n, mbstate_t *mbs)
+{
+  size_t len = localeinfo.sbclen[to_uchar (*s)];
+  return len == (size_t) -2 ? mbrlen (s, n, mbs) : len;
+}
+
+_GL_INLINE_HEADER_END
 
 #endif /* GREP_SEARCH_H */

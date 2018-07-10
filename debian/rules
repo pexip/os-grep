@@ -36,12 +36,21 @@ DEB_CONFIGURE_SCRIPT_ENV += LIBS="$(LIBS)"
 # (e.g. DEB_CONFIGURE_EXECDIR in autotools-vars.mk)?
 DEB_CONFIGURE_EXTRA_FLAGS += --exec-prefix=/
 
+# Run expensive tests only on amd64 and i386. Builders have had some
+# problems with expensive checks, e.g. long-pattern-perf, on other
+# architectures such as s390x, ppc64el and hurd-i386.
+
 DEB_MAKE_CHECK_TARGET = check
 
 include /usr/share/cdbs/1/rules/upstream-tarball.mk
 include /usr/share/cdbs/1/rules/autoreconf.mk
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/autotools.mk
+
+# Fix permissions in test files not yet included in upstream released
+# tarballs
+configure/grep::
+	chmod +x tests/proc
 
 binary-fixup/grep::
 	rm -f debian/grep/usr/share/info/dir.gz

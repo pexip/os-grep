@@ -1,4 +1,3310 @@
+2016-12-06  Jim Meyering  <meyering@fb.com>
+
+	version 2.27
+	* NEWS: Record release date.
+
+2016-11-29  Jim Meyering  <meyering@fb.com>
+
+	grep: fix DFA-induced infloop
+	* gnulib: Update to latest, for the DFA infloop fix.
+	* tests/dfa-infloop: New test, to trigger an infinite loop
+	in the DFA matcher.
+	* tests/Makefile.am (TESTS): Add it.
+
+2016-11-28  Jim Meyering  <meyering@fb.com>
+
+	tests: use "returns_ N env VAR=val ..."
+	rather than "VAR=val returns_ N ..."
+	Some shells do not propagate envvar settings through our use
+	of the "returns_" function, so set any envvar via use of "env".
+	This was an issue at least on Ubuntu and Debian-based systems,
+	presumably due to their common use of "dash" as /bin/sh.
+	Reported by Assaf Gordon.
+	* tests/char-class-multibyte: As above.
+	* tests/euc-mb: Likewise.
+	* tests/false-match-mb-non-utf8: Likewise.
+	* tests/pcre-infloop: Likewise.
+	* tests/pcre-jitstack: Likewise.
+	* tests/sjis-mb: Likewise.
+	* tests/warn-char-classes: Likewise.
+
+2016-11-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	tests: revert check for unibyte French range bug
+	The test wasn't portable, as it assumed that rational ranges
+	were not in effect.  Problem reported by Eric Blake (Bug#25048#8).
+	There doesn't seem to be a portable way to do the test, so omit it.
+	* tests/init.cfg, tests/unibyte-bracket-expr:
+	Revert previous change.
+
+	build: update gnulib submodule to latest
+
+2016-11-27  Jim Meyering  <meyering@fb.com>
+
+	grep: avoid false matches in non-UTF8 multibyte locales
+	* gnulib: Update to latest, for the dfa.c fix.
+	* NEWS (Bug fixes): Mention it.
+	* tests/false-match-mb-non-utf8: New file, with tests for this.
+	Based on tests from Stephane Chazelas.
+	* tests/Makefile.am (TESTS): Add it.
+	Introduced by commit v2.18-54-g3ef4c8e, a change that made grep use
+	its DFA matcher more aggressively.  The malfunction arises only with
+	the DFA matcher, not with regex.
+	Reported by Stephane Chazelas in https://bugs.gnu.org/24975
+
+2016-11-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	tests: check for unibyte French range bug
+	Problem reported by Stephane Chazelas (Bug#24973).
+	This bug was fixed in Gnulib.
+	* NEWS: Document the fix.
+	* tests/init.cfg (require_ru_RU_koi8_r): Remove.
+	* tests/unibyte-bracket-expr: Add a test for the bug.
+	Call get-mb-cur-max directly instead of bothering with
+	require_ru_RU_koi8_r.
+
+	build: update gnulib submodule to latest
+
+2016-11-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: further -P performance fix
+	Problem reported by Stephane Chazelas in:
+	http://bugs.gnu.org/22655#103
+	* src/pcresearch.c (Pexecute): Set the subject to the start of
+	each line as it is found.
+
+	grep: -P no longer uses PCRE_MULTILINE
+	This reverts commit f6603c4e1e04dbb87a7232c4b44acc6afdf65fef,
+	as the extra performance is not worth the trouble for PCRE users.
+	Problem reported by Stephane Chazelas in:
+	http://bugs.gnu.org/22655#103
+	* NEWS: Document this and the next patch.
+	* src/dfasearch.c (EGexecute):
+	* src/grep.c (execute_fp_t):
+	* src/kwsearch.c (Fexecute):
+	* src/pcresearch.c (Pexecute):
+	First arg is now a const pointer again.
+	* src/grep.c (buf_has_encoding_errors): Now static.
+	* src/grep.h (buf_has_encoding_errors): Remove decl.
+	* src/search.h: Adjust decls.
+	* src/pcresearch.c (reflags): Remove.  All uses removed.
+	(Pcompile, Pexecute): Do not use PCRE_MULTILINE.
+
+2016-11-19  Jim Meyering  <meyering@fb.com>
+
+	doc: fix a doubled "the"
+	* doc/grep.texi (--perl-regexp): s/the\nthe/the/
+
+2016-11-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: fix -zxP bug
+	* NEWS: Document this.
+	* src/pcresearch.c (Pcompile): Search a line at a time if -x is
+	used, since -x uses ^ and $.
+	* tests/pcre: Test this.
+
+	grep: simplify by using PRIuMAX
+	* configure.ac (HAVE_PRINTF_C99_SIZES): Remove; no longer needed.
+	* src/grep.c (print_offset): Simplify (Bug#24451).
+
+	grep: -T now adjusts number widths for worst case
+	* NEWS, doc/grep.texi (Output Line Prefix Control):
+	Document this (Bug#24451).
+	* src/grep.c (offset_width): New static var.
+	(print_offset): Use it instead of arg.  All callers changed.
+	(grep): Set it.
+	* tests/initial-tab: Test this.
+
+	grep: -T no longer outputs BS
+	* NEWS: Document this (Bug#24451).
+	* src/grep.c (print_line_head): Do not attempt to backspace output.
+	* tests/initial-tab: New test.
+	* tests/Makefile.am (TESTS): Add it.
+
+	grep: document -oz better
+	* doc/grep.texi (General Output Control, Usage): Tweak (Bug#24961).
+
+	grep: fix performance typo with -P
+	Reported by Zev Weiss in: http://bugs.gnu.org/22655#88
+	* src/pcresearch.c (Pcompile): Initialize reflags.
+
+	tests: use "returns_" rather than "$?"
+	* tests/grep-dev-null-out: Use "returns_ 124" rather than testing
+	$? = 124.
+
+	grep -f /dev/null -L PAT FILE outputs FILE
+	* NEWS: Document this.
+	* src/grep.c (main): Do not exit right away with -L.
+	* tests/skip-read: Test for the fix.
+
+	grep: tune -f /dev/null
+	* src/grep.c (main): Do the -f /dev/null early-exit checks before
+	more-expensive tests that involve syscalls.
+
+	grep: treat -f /dev/null like -m0
+	* NEWS: Document this.
+	* src/grep.c (main): With -f /dev/null, don't bother to read the
+	input.  This is what FreeBSD grep does.
+	* tests/Makefile.am (TESTS): Add skip-read.
+	* tests/skip-read: New file.
+
+	grep: avoid O(N**2) buffer reallocation
+	* src/grep.c (main): Use x2realloc to avoid O(N**2) performance as
+	pattern buffers grow.
+
+	grep: avoid unnecessary gettext call
+	Translate "(standard input)" lazily.
+	* src/grep.c (input_filename): New function.
+	(suppressible_error): Remove 1st arg, since it is always
+	input_filename ().  All callers changed.
+	(suppressible_error, print_filename, grep, grepdesc): Use it.
+	(grep_command_line_arg): Set filename to NULL if standard
+	input has no label.  Often, this avoids all calls to gettext,
+	which can be a win as the first call can be expensive.
+
+	grep: drain the input pipe faster
+	* src/grep.c (dev_null_output): Now static.
+	(drain_input): New function, using 'splice' if that makes sense.
+	(finalize_input): Use it.
+	(main): Omit now-unnecessary initialization.
+
+	grep: scale back /dev/null speedup
+	The performance improvement when output is /dev/null (commit
+	af6af288eac28951b5eee1eaaf373e22b2193b7b dated 2016-05-01)
+	breaks scripts that run "PROGRAM | grep PATTERN >/dev/null"
+	where PROGRAM dies when writing into a broken pipe.
+	Suppress the improvement if standard input is not seekable.
+	Problem reported by Gary Johnson (Bug#24941).
+	* NEWS: Document this.
+	* src/grep.c (seek_failed): New static var.
+	(seek_data_failed): Move decl earlier, to be next to seek_failed.
+	(file_must_have_nulls): Skip useless syscalls if seek_failed.
+	Lessen source-code nesting.
+	(reset): Set seek_failed and seek_data_failed.
+	Try lseek even on non-regular files.
+	(grep): New arg INEOF.  All callers changed.
+	Do not clear seek_data_failed here, since 'reset' now does this.
+	(finalize_input): New static function.
+	(grepdesc): Use it.
+	(main): Do not exit on first match merely because output is
+	/dev/null.
+	* tests/grep-dev-null-out: Adjust to new behavior.
+
+	grep: improve diagnostic on lseek failure
+	* src/grep.c (reset): Mention the file name in the (unlikely)
+	chance of an lseek failure.
+
+	grep: avoid unnecessary isatty calls
+	This fixes an inefficiency that was mistakenly introduced a while
+	back, when the macro SET_BINARY became defined on all platforms.
+	* src/grep.c (grepdesc, main): Do not unecessarily call isatty on
+	POSIXish platforms.
+
+	grep: -Pz no longer rejects ^, $
+	Problem reported by Stephane Chazelas (Bug#22655).
+	* NEWS: Document this.
+	* doc/grep.texi (grep Programs): Warn about -Pz.
+	* src/pcresearch.c (reflags): New static var.
+	(multibyte_locale): Remove static var; now local to Pcompile.
+	(Pcompile): Check for (? and (* too.  Set reflags instead of
+	dying when problematic operators are found.
+	(Pexecute): Use reflags to decide whether searches should
+	be multiline.
+	* tests/pcre: Test new behavior.
+
+2016-11-14  Jim Meyering  <meyering@fb.com>
+
+	tests: use "returns_" rather than explicit comparison with "$?"
+	* tests/sjis-mb (encode): Rearrange to emit desired input into
+	a file, rather than piping directly into grep.  That permits
+	the use of returns_ 1 to verify timeout's exit status.
+	* tests/euc-mb: Use "returns_ 1" rather than testing $? = 1
+	* tests/char-class-multibyte: Likewise.
+	* tests/dfa-heap-overrun: Likewise.
+	* tests/encoding-error: Likewise.
+	* tests/fedora: Likewise.
+	* tests/grep-dev-null: Likewise.
+	* tests/init.cfg (envvar_check_fail): Likewise.
+	* tests/kwset-abuse: Likewise.
+	* tests/mb-non-UTF8-overrun: Likewise.
+	* tests/multibyte-white-space: Likewise.
+	* tests/pcre-infloop: Likewise.
+	* tests/surrogate-pair: Likewise.
+	* tests/warn-char-classes: Likewise.
+	Do the same for other values:
+	* tests/backref-multibyte-slow: Likewise.
+	* tests/euc-mb: Likewise.
+	* tests/pcre-abort: Likewise.
+	* tests/pcre-jitstack: Likewise.
+	* tests/repetition-overflow: Likewise.
+	* tests/reversed-range-endpoints: Likewise.
+	* tests/warn-char-classes: Likewise.
+
+2016-10-26  Jim Meyering  <meyering@fb.com>
+
+	doc: grep builds on HP-UX once again
+	* NEWS (Bug fixes): Mention the HP-UX fix.
+
+	gnulib: update to latest, for getprogname HPUX port
+
+2016-10-22  Mark Veltzer  <mark.veltzer@gmail.com>
+
+	ignore coverage generated files
+
+	ignore ar-lib in build-aux
+
+2016-10-20  Zev Weiss  <zev@bewilderbeest.net>
+
+	grep: use 'j' intmax_t printf length modifier if supported
+	* configure.ac: Use gl_PRINTF_SIZES_C99 to test printf and
+	(conditionally) define HAVE_PRINTF_C99_SIZES.
+	* src/grep.c (print_offset): Use printf("%j...") for printing
+	[u]intmax_t if HAVE_PRINTF_C99_SIZES is defined; otherwise continue
+	using the existing hand-rolled loop.
+
+2016-10-15  Jim Meyering  <meyering@fb.com>
+
+	build: distribute new file, die.h, so "make distcheck" passes
+	* src/Makefile.am (grep_SOURCES): Add die.h.
+	Also, sort these file names.
+
+2016-10-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	build: update gnulib submodule to latest
+
+2016-10-09  Jim Meyering  <meyering@fb.com>
+
+	maint: die.h: add the "#define ..." part of double inclusion guard
+	* src/die.h (DIE_H): Define to 1.
+
+2016-10-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: don't assume stdbool.h before die call
+	* src/die.h: Include stdbool.h, since 'die' uses 'false'
+
+	grep: die more systematically
+	* src/die.h: New file.
+	* src/dfasearch.c, src/grep.c, src/pcresearch.c: Include die.h.
+	* src/dfasearch.c (dfaerror):
+	* src/grep.c (context_length_arg, add_count, prline, setmatcher, main):
+	* src/pcresearch.c (jit_exec, Pcompile, Pexecute):
+	Use 'die' instead of 'error' when exiting.
+	* src/pcresearch.c: Do not include verify.h.
+	(die): Remove; now in die.h.
+	* src/search.h: Do not include error.h here, since this file does
+	not use anything defined in error.h.  Instead, dfasearch.c, which
+	uses error.h's symbols, now includes error.h directly.
+
+2016-10-02  Jim Meyering  <meyering@fb.com>
+
+	maint: post-release administrivia
+	* NEWS: Add header line for next release.
+	* .prev-version: Record previous version.
+	* cfg.mk (old_NEWS_hash): Auto-update.
+
+	version 2.26
+	* NEWS: Record release date.
+
+2016-10-01  Jim Meyering  <meyering@fb.com>
+
+	gnulib: update to latest; for getprogname fix
+
+2016-10-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	tests/grep-dir: port to Solaris 10
+	* tests/grep-dir: Port to Solaris 10 'cat', which
+	exits with status 0 even after 'read' fails from a directory.
+
+2016-09-28  Jim Meyering  <meyering@fb.com>
+
+	build: placate GCC 7's -Wimplicit-fallthrough
+	* src/pcresearch.c (die): New macro.
+	(Pexecute): Use it in place of offending uses of error,
+	to placate GCC 7's -Wimplicit-fallthrough.
+	Include verify.h.  Since this is grep's first explicit use of this
+	gnulib module, ...
+	* bootstrap.conf (gnulib_modules): Add verify.
+
+	gnulib: update to latest; for ...
+	This includes the following:
+	 - a getprogname-vs-openbsd-5.1 portability fix
+	 - "fallthru" comment-adding changes for dfa and unistr/u8-uctomb-aux.c
+	 - another getprograme fix to avoid breaking newer glibc
+
+2016-09-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	build: reword .git old-GCC warning
+	* configure.ac (gl_gcc_warnings): Reword diagnostic.
+	Suggested by Assaf Gordon in:
+	http://lists.gnu.org/archive/html/grep-devel/2016-09/msg00024.html
+
+	build: port .git builds to newer GCC
+	* configure.ac (gl_gcc_warnings): Omit duplicate copy of 'main'.
+	Problem reported by Assaf Gordon in:
+	http://lists.gnu.org/archive/html/grep-devel/2016-09/msg00024.html
+
+	build: port .git builds to older GCC
+	Problem reported by Dagobert Michelsen in:
+	http://lists.gnu.org/archive/html/grep-devel/2016-09/msg00018.html
+	* configure.ac (gl_gcc_warnings): Default to false if .git
+	exists but GCC is too old.
+
+2016-09-27  Jim Meyering  <meyering@fb.com>
+
+	tests/long-pattern-perf: avoid false-failure due to cache speed
+	* tests/long-pattern-perf: This test would fail semi-consistently
+	on some systems, probably because the smaller regexp fit well
+	within cache, yet the larger one did not.  In that case, there
+	was a relative speed difference greater than 20x and the test
+	would fail.  Quadruple the sizes, to make that less likely.
+	Also, construct the 10x larger regexp directly from the smaller,
+	rather than relying on seq with endpoints to induce that
+	approximate size ratio.  Reported by Bruce Dubbs in
+	https://lists.gnu.org/archive/html/grep-devel/2016-09/msg00013.html
+
+2016-09-24  Jim Meyering  <meyering@fb.com>
+
+	build: avoid "./configure && make dist" missing-dep. failure
+	* Makefile.am (run-syntax-check): Depend on "all", to avoid a
+	parallel build failure due to a missing dependency. Reported by
+	Paul Eggert in https://bugs.gnu.org/24256#50
+
+2016-09-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	build: update gnulib submodule to latest
+
+2016-09-24  Jim Meyering  <meyering@fb.com>
+
+	tests/fmbtest: avoid false-failure due to reliance on MB-correct sed
+	* tests/fmbtest: Several of these tests would mistakenly fail due to
+	postprocessing with a combination of sed and locale support that failed
+	to handle some multibyte characters in the cs_CZ.UTF-8 locale.  Instead
+	of relying on sed's multibyte support or anything locale-related to
+	perform this simple filtering, just use this: tr -cs '0-9' '[ *]'
+	Also, rather than exporting LC_ALL, just set it for each command.
+	Reported by Nelson H. F. Beebe.
+	https://bugs.gnu.org/24534
+
+	tests: revamp multibyte-white-space test to be more permissive
+	This test elicits too many failures.  Whether a system has accurate
+	unicode "whitespace" attributes should not influence whether grep's
+	test suite passes.  In many cases, now you will see a warning that
+	some multibyte characters do not pass whitespace-related tests, but
+	this test no longer fails.  However, if you run this test on a modern
+	enough system, it does require that \s and \S do work properly with
+	most of the listed characters.
+	* tests/multibyte-white-space: Confirm that Fedora 24's locale
+	tables still declare those four Unicode code points *not* whitespace.
+	Honor a new column telling how to handle failure.  Provide more
+	information in each diagnostic.
+	Reported by Nelson H. F. Beebe.
+	https://bugs.gnu.org/24530
+
+	tests: avoid erroneous failure of pcre-jitstack test
+	On some systems (*BSD), 'ulimit -s unlimited' would fail, yet the
+	test for that mistakenly masked the failure, so the following grep
+	command ended up failing with a segfault.
+	* tests/pcre-jitstack: Don't mask the ulimit failure.
+	Reported privately by Nelson H. F. Beebe.
+	https://bugs.gnu.org/24524
+
+2016-09-23  Jim Meyering  <meyering@fb.com>
+
+	grep: avoid unwarranted "input file 'F' is also the output" on *BSD
+	On *BSD systems, any command like "echo y | grep x", where grep reads
+	from a pipe and writes to standard output, would mistakenly emit this:
+	  grep: input file '(standard input)' is also the output
+	* src/grep.c (grepdesc): Ensure that the file descriptor we're
+	reading is a regular one before using SAME_INODE to test whether
+	it is the same as the descriptor open on standard output.
+	Nelson Beebe reported privately that the foad1 tests failed on many
+	BSD systems.  Exposed by commit v2.25-2-gaf6af28.
+	https://bugs.gnu.org/24522
+
+	tests: avoid backref-multibyte-slow false failure
+	* tests/backref-multibyte-slow (max_seconds): If we calculate
+	a max duration of 1 second, use 5.  Otherwise, on high-latency
+	systems, it would be way too easy for the duration of the final
+	test run to exceed that limit.  Reported by Nelson H. F. Beebe.
+	http://bugs.gnu.org/24516
+
+2016-09-22  Jim Meyering  <meyering@fb.com>
+
+	gnulib: update to latest; for getprogname-vs-AIX fix
+
+2016-09-18  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep: add news entry for fix to bug#24233
+	* NEWS (Bug fixes): Add an entry describing bug#24233.
+	The bug was fixed by commit v2.25-77-gad468bb, by chance.
+
+2016-09-15  Jim Meyering  <meyering@fb.com>
+
+	gnulib: update to latest
+
+2016-09-10  Jim Meyering  <meyering@fb.com>
+
+	dfa: reflect move of grep's DFA code to gnulib
+	Now that the core DFA code and tests reside in gnulib,
+	remove the copies here and use what gnulib provides.
+	* bootstrap.conf: Use the dfa module.
+	* cfg.mk: Remove settings involving files that have moved.
+	(_gl_TS_unmarked_extern_functions): Add dfaerror and dfawarn.
+	It is wrong/ugly to have to define these global symbols to use
+	the dfa module, but we'll adjust that separately.
+	* po/POTFILES.in: Apply s/src/lib/ to src/dfa.c.
+	* src/Makefile.am: Remove mention of dfa.[ch] and localeinfo.[ch].
+	* tests/Makefile.am: Remove mention of the tests that we have
+	moved to the gnulib module.
+	* src/dfa.c: Remove file.
+	* src/dfa.h: Likewise.
+	* src/localeinfo.c: Likewise.
+	* src/localeinfo.h: Likewise.
+	* tests/dfa-match: Likewise.
+	* tests/dfa-match-aux.c: Likewise.
+	* tests/invalid-char-class: Likewise.
+
+	gnulib: update to latest, for new dfa module
+
+2016-09-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: encoding errors suppress just their line
+	From a suggestion by Marcello Perathoner (Bug#22838).
+	* NEWS, doc/grep.texi (File and Directory Selection): Document this.
+	* src/grep.c (print_line_head): Do not suppress later output lines
+	merely because an earlier output line would have had an encoding error.
+	* tests/encoding-error: Test for the new behavior.
+
+2016-09-08  Jim Meyering  <meyering@fb.com>
+
+	gnulib: update to latest, for getprogname fixes
+
+2016-09-08  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: additional change new option for anchored searches
+	* src/dfa.c (dfaexec_main): Do it.
+
+2016-09-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	doc: define "context lines"
+	Reported by Igor Bogomazov via Santiago Ruano Rincón (Bug#24024).
+	* doc/grep.texi (Context Line Control): Define "context lines".
+
+	build: update gnulib submodule to latest
+
+2016-09-05  Jim Meyering  <meyering@fb.com>
+
+	maint: switch from gnulib's progname to getprogname module
+	* gnulib: Update to latest, for its new getprogname module.
+	* bootstrap.conf (avoided_gnulib_modules): Include the getprogname
+	module rather than the now-obsolescent progname.
+	* src/grep.c: Include "getprogname.h" rather than "progname.h"
+	and remove any use of set_program_name.
+	* tests/dfa-match-aux.c (main): Likewise.
+	* tests/get-mb-cur-max.c (main): Likewise.
+	* src/grep.c (usage, main): Use getprogname() in place of program_name.
+
+2016-09-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: minor cleanup of previous change
+	* src/dfa.c (dfaexec_main): Omit redundant code and reindent.
+
+2016-09-02  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: additional change new option for anchored searches
+	* src/dfa.c (dfaexec_main): Do it.
+
+	dfa: use single-byte algorithm even in non-UTF-8
+	* src/dfa.c (dfaexec_main): Do it.  (This was inadvertently
+	omitted in a recent patch.)
+
+2016-09-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: merge xalloc.h changes from Gawk
+	* src/dfa.h (_GL_ATTRIBUTE_MALLOC): Define here, as other
+	Gnulib .h files do.  This is more consistent with Gawk.
+	* src/dfa.c: Include xalloc.h, since dfa.h no longer does so.
+	Include localeinfo.h later; we don't care about order, but Gawk does.
+
+2016-09-02  Arnold Robbins  <arnold@skeeve.com>
+
+	dfa: port to C90
+	* src/dfa.c (dfamust): Avoid declarations after statement (Bug#21486).
+
+2016-09-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: new option for anchored searches
+	This follows up on a suggestion by Norihiro Tanaka (Bug#24262).
+	* src/dfa.c (struct regex_syntax): New member 'anchor'.
+	(char_context): Use it.
+	(dfasyntax): Change signature to specify it, along with the old
+	FOLD and EOL args, as a single DFAOPTS arg.  All uses changed.
+	* src/dfa.h (DFA_ANCHOR, DFA_CASE_FOLD, DFA_EOL_NUL): New constants
+	for dfasyntax new last arg.
+
+2016-09-02  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: simplify and optimize at initial state in execution
+	* src/dfa.c (skip_remains_mb): Remove argument *pwc.  Update calller.
+	(dfaexec_main): Simplify and optimize at initial state (Bug#24261).
+
+	dfa: simplify to find state index for state 0
+	* src/dfa.c (dfastate): Simplify to find state index for state 0.
+
+2016-09-01  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	tests: add a new test for SJIS locale
+	* tests/sjis-mb: Add a new test.  It fails in grep-2.25 or prior.
+
+2016-09-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: update NEWS
+	* NEWS: Describe previous change.
+
+	grep: use regex fastmap unless -i
+	This builds on a suggestion by Norihiro Tanaka (Bug#24009).
+	* src/dfasearch.c (GEAcompile): Use a fastmap unless -i.
+	This improves performance 20x for me using the first benchmark
+	given in Bug#24009.
+
+	grep: improve dfasearch storage management
+	This patch is mostly refactoring, with a bit of performance tweaking.
+	It is done in preparation for a fix for Bug#24009.
+	* src/dfasearch.c (patterns): Now of type struct re_pattern_buffer *
+	instead of an anonymous struct pointer, since there is no longer
+	any need to keep regs here.  All uses changed.
+	(GEAcompile): Use patlim instead of a hard-to-follow "total".
+	Use x2nrealloc to avoid potential O(N**2) reallocation algorithm.
+	Initialize just the pattern members that need clearing.
+	(EGexecute): Put regs into a static variable, as this code did
+	before 2001-02-18, as there is no need to have a separate set of
+	regs for each pattern.  Explain the "Q@#%!#" comment better.
+
+2016-09-01  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: remove separation by context in transition in non-UTF8 multibyte locales
+	* src/dfa.c (struct dfa): Remove member curr_dependent.  All uses
+	removed.
+
+2016-09-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: document previous change
+	* NEWS: Adjust to match previous change.
+
+2016-09-01  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: avoid invalid character matching period
+	* dfa.c (transit_state): Avoid invalid character matching period.
+
+	dfa: use single-byte algorithm even in non-UTF-8
+	Even in non-UTF8 locales, if the current input character
+	is single byte, we can use CSET to match ANYCHAR.
+	* src/dfa.c (struct dfa): New member canychar.
+	Cache index of CSET for ANYCHAR.
+	(lex): Make CSET for ANYCHAR.
+	(state_index): Simplify.
+	(dfastate): Consider CSET for ANYCHAR.
+	(transit_state_singlebyte, transit_state): Remove handling for eolbyte,
+	as we assume that eolbyte does not appear at current position.
+	(dfaexec_main): Use algorithm for single byte character to any single
+	byte character in input text always.
+	(dfasyntax): Initialize canychar.
+
+2016-09-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: avoid code duplication with -iF
+	This follows up on the -iF performance improvement (Bug#23752).
+	* NEWS: Simplify description of -iF improvement.
+	* src/dfa.c: Do not include wctype.h.
+	(lonesome_lower, case_folded_counterparts): Move to localeinfo.c.
+	(CASE_FOLDED_BUFSIZE): Move to localeinfo.h.
+	* src/grep.c: Do not include wctype.h.
+	(lonesome_lower): Remove.
+	(fgrep_icase_available): Use case_folded_counterparts instead.
+	Do not call it for the same character twice.
+	Return false on wcrtomb failures (which should never happen).
+	(fgrep_to_grep_pattern, main): Simplify.  Let fgrep_to_grep’s
+	caller fiddle with the global variables.
+	* src/localeinfo.c: Include <wctype.h>
+	(lonesome_lower, case_folded_counterparts):
+	Move here from src/dfa.c.  Return int, not unsigned int.
+	Verify that CASE_FOLDED_BUFSIZE is big enough.
+	* src/localeinfo.h (CASE_FOLDED_BUFSIZE): Now 32, so that
+	we don’t expose lonesome_lower’s size.
+	* src/searchutils.c (kwsinit): Return new kwset instead of
+	storing it via a pointer.  All callers changed.  Simplify a bit.
+
+2016-09-01  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep: speed up -iF in multibyte locales
+	In a multibyte locale, if a pattern is composed of only single byte
+	characters and their all counterparts are also single byte characters
+	and the pattern does not have invalid sequences, grep -iF uses the
+	fgrep matcher, the same as in a single byte locale (Bug#23752).
+	* NEWS: Mention it.
+	* src/grep.c (lonesome_lower): New constant.
+	(fgrep_icase_available): New function.
+	(fgrep_to_grep_pattern): Simplify it.
+	(main): Use them.
+	* src/searchutils.c (kwsinit): New arg MB_TRANS; all uses changed.
+	Try fgrep matcher for case insensitive matching by grep -F in multibyte
+	locale.
+
+2016-08-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	build: update gnulib submodule to latest
+
+2016-08-31  Jim Meyering  <meyering@fb.com>
+
+	maint: avoid new 'make syntax-check' failure
+	* src/dfa.c (using_simple_locale): Prefer STREQ(a,b) over
+	strcmp(a,b) == 0.
+
+	gnulib: update to latest
+
+2016-08-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: make dfa.c fully thread-safe
+	This follows up on Zev Weiss’s recent patches to make the DFA code
+	thread-safe (Bug#24249).  It removes the remaining static
+	variables used by dfa.c.  These variables are locale-dependent, so
+	they would cause problems in multithreaded code where different
+	threads are in different locales (e.g., via uselocale).  I
+	abstracted most of the variables into a new localeinfo module.
+	* src/Makefile.am (grep_SOURCES): Add localeinfo.c.
+	(noinst_HEADERS): Add localeinfo.h.
+	* src/dfa.c: Include localeinfo.h.
+	(struct dfa): Remove multibyte member, as it is now part of
+	localeinfo.  New members simple_locale and localeinfo.
+	Put locale-related members at the end.
+	(mbrtowc_cache): Remove; now part of dfa->localeinfo.
+	(charclass_index): Rename back from dfa_charclass_index,
+	since it's private.
+	(unibyte_word_constituent): New arg DFA; use its sbctowc member.
+	(using_utf8, dfa_using_utf8, init_mbrtowc_cache, check_utf8):
+	Remove; now done by localeinfo members.  All uses changed.
+	(dfasyntax): New localeinfo arg.  Move to end to avoid forward decls.
+	Initialize the entire DFA.
+	(unibyte_c, check_unibyte_c): Remove; now in simple_locale member.
+	(using_simple_locale): Now takes bool instead of DFA.
+	Do the locale check here, rather than in the caller,
+	as the result is now cached in dfa->simple_locale.
+	(dfaalloc): Just allocate the DFA.  dfasyntax now initializes it.
+	* src/dfa.h: Add forward decl of struct localeinfo.
+	Adjust to new dfa.c API.
+	* src/dfasearch.c (localeinfo): New var, replacing former static
+	vars like mbrtowc_cache.
+	* src/localeinfo.c, src/localeinfo.h: New files.
+	* src/search.h: Include localeinfo.h.
+	(localeinfo): New decl.
+	* src/searchutils.c (mbclen_cache, build_mbclen_cache):
+	Remove.  All uses changed to localeinfo.
+	* tests/Makefile.am (dfa_match_aux_LDADD): Add localeinfo.o.
+	* tests/dfa-match-aux.c: Include localeinfo.h.
+	(main): Adjust to changes in DFA API.
+
+2016-08-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	build: update gnulib submodule to latest
+	This should fix Bug#24323 reported by Dennis Clarke, where grep
+	does not build on Solaris 10 when compiled with Solaris Studio 12.4.
+
+2016-08-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: minor thread-safety cleanups
+	* src/dfa.c (struct lexer_state): Rename lexptr to ptr and lexleft
+	to left, for brevity.  All uses changed.
+	(struct dfa): Rename lexstate to lex and parsestate to parse,
+	for brevity.  All uses changed.
+	(using_simple_locale): Simplify boolean expression.
+	(FETCH_WC): Parenthesize uses of dfa macro arg.
+	(FETCH_WC, parse_bracket_exp, addtok_mb): Prefer suffix operators
+	on structure members when possible, for clarity.
+	(parse_bracket_exp): Check for buffer exhaustion before
+	dereferencing buffer pointer.
+	(struct lexptr): New type.
+	(push_lex_state, pop_lex_state): Use it.  Change from macros
+	PUSH_LEX_STATE and POP_LEX_STATE to static functions, and add
+	parameters to make them proper C functions.  All uses changed.
+	(lex): Simplify tests for \) and \|.  Avoid some string
+	duplication by using &"^..."[boolean].
+	(dfaalloc): Use xzalloc, not xcalloc with 1.
+
+2016-08-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: minor tweaks of initial buffer alloc
+	* src/grep.c (main): Allocate input buffer only when about
+	to do I/O.  Avoid int overflow on systems with 2 GiB pages.
+	Fix size_t overflow check.
+
+2016-08-20  Zev Weiss  <zev@bewilderbeest.net>
+
+	dfa: constify some function parameters
+	* src/dfa.c (char_context): Mark dfa parameter const.
+	(charclass_context): Likewise.
+
+	dfa: thread-safety: initialize mbrtowc_cache in dfa_init
+	* src/dfa.c (dfasyntax): Remove initialization of mbrtowc_cache.
+	(init_mbrtowc_cache): New function.
+	(dfa_init): Call it.
+	http://bugs.gnu.org/24259
+
+	dfa: thread-safety: eliminate static local variables
+	* src/dfa.c: Replace utf8 and unibyte_c static local variables with
+	static globals initialized by a new function dfa_init() which must be
+	called before any other dfa*() functions.
+	(dfa_using_utf8): Rename using_utf8() to dfa_using_utf8() for
+	consistency with other exported functions.
+	* src/dfa.h (dfa_using_utf8): Rename using_utf8() to dfa_using_utf8();
+	also add _GL_ATTRIBUTE_PURE.
+	(dfa_init): New function.
+	* src/grep.c (main), tests/dfa-match-aux.c (main): Call dfa_init().
+	* src/dfasearch.c (EGexecute): Replace using_utf8 with dfa_using_utf8.
+	* src/kwsearch.c (Fexecute): Likewise.
+	* src/pcresearch.c (Pcompile): Likewise.
+	http://bugs.gnu.org/24259
+
+	dfa: thread-safety: move regex syntax configuration into struct dfa
+	* src/dfa.c: move global variables holding regex syntax configuration
+	into a new struct (`struct regex_syntax') and add an instance of it to
+	struct dfa.  All references to the globals are replaced with
+	references to the dfa struct's new member.  As a side effect, a
+	`struct dfa' must be allocated with dfaalloc() and passed to
+	dfasyntax().
+	* src/dfa.h (dfasyntax): Add new struct dfa* parameter.
+	* src/dfasearch.c (GEAcompile): Allocate `dfa' earlier and pass it to
+	dfasyntax().
+	* tests/dfa-match-aux.c (main): Pass `dfa' to dfasyntax().
+	http://bugs.gnu.org/24259
+
+	dfa: thread-safety: move parser state into struct dfa
+	* src/dfa.c: move global variables holding parser state (`tok' and
+	`depth') into a new struct (`struct parser_state') and add an instance
+	of it to struct dfa.  All references to the globals are replaced by
+	references to the dfa struct's new member.
+	http://bugs.gnu.org/24259
+
+	dfa: thread-safety: move lexer state into struct dfa
+	* src/dfa.c: move global variables holding lexer state into a new
+	struct (`struct lexer_state') and add an instance of this struct to
+	struct dfa.  All references to the globals are replaced with
+	references to the dfa struct's new member.
+	http://bugs.gnu.org/24259
+
+2016-08-19  Zev Weiss  <zev@bewilderbeest.net>
+
+	dfa: thread-safety: remove dfa.c's "dfa" global
+	Remove the global dfa struct.  Instead, add a struct dfa pointer
+	parameter to each function that had been using the global.
+	* src/dfa.c (dfa): Remove file-scoped global.
+	(charclass_index): Remove now-unnecessary function.
+	(using_simple_locale): Add a dfa parameter and update all callers.
+	(FETCH_WC, parse_bracket_exp, lex, addtok_mb, addtok): Likewise.
+	(addtok_wc, add_utf8_anychar, atom, nsubtoks, copytoks): Likewise.
+	(closure, branch, regexp): Likewise.
+	(dfaparse): No longer set the global.
+	http://bugs.gnu.org/24260
+
+2016-08-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: tune list_files conversion to enum
+	* src/grep.c (grepdesc): Use a slightly more-efficient way to test
+	list_files.
+
+	grep: prefer bitwise to short-circuit when shorter
+	* src/grep.c (skip_devices, initialize_unibyte_mask, fillbuf, main)
+	* src/kwsearch.c (Fexecute): Prefer bitwise to short-circuit ops
+	when they are logically equivalent and the bitwise ops generate
+	shorter code on GCC 6.1 x86-64.
+	* src/grep.c (get_nondigit_option, parse_grep_colors):
+	Use c_isdigit instead of spelling it out with a short-circuit op.
+
+2016-08-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: use 64-bit when ulong is at least that wide
+	* src/dfa.c (charclass_word): Now unsigned long instead of unsigned.
+	(CHARCLASS_WORD_BITS): Now 64 on 64-bit platforms.
+	(CHARCLASS_PAIR, CHARCLASS_INIT): New macros.
+	(CHARCLASS_WORD_MASK): Now a static const, since it no longer
+	needs to be a macro.
+	(equal): Open-code rather than calling memcmp.
+	(add_utf8_anychar): Use CHARCLASS_INIT.
+
+	dfa: avoid uninitialized constants
+	Some compilers warn about 'static int const x;' on the grounds
+	that X should have an initializer.  Instead of worrying about
+	this, rewrite to avoid this sort of thing.
+	* src/dfa.c (emptyset): New function.
+	(parse_bracket_exp): Use it instead of 'equal' and a zero constant.
+	* src/dfasearch.c (struct patterns): Remove tag 'patterns'.
+	(patterns0): Remove zero constant.
+	(GEAcompile): Use memset instead of the zero constant.
+
+2016-08-17  Jim Meyering  <meyering@fb.com>
+
+	maint: avoid new "make syntax-check" failure
+	* src/dfa.c: Adjust comment not to go past column 80.
+
+	tests: pcre-jitstack: avoid false failure without base64 -d support
+	* tests/pcre-jitstack: Try harder to find a base64 decoder:
+	try 'base64 -d', 'base64 -D', 'openssl base64 -d' and perl's
+	MIME::Base64 decode_base64.  The old code would fail at least on
+	OS X, for which base64 expects -D or --decode.
+	Reported by Jack Howarth in http://bugs.gnu.org/24243.
+
+2016-08-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: minor refactoring and doc fixes
+	* NEWS: Improve description of recent change.
+	* src/dfa.c: Improve commentary.  Indent new code (and some
+	long-existing howlers) more in GNU style.
+	(dfa_state): Reorder members to make struct smaller on x86.
+	mb_trindex member is now state_num, not size_t, so that -1 is more
+	natural; all uses changed.
+	(struct dfa): Similarly for mb_trcount member.
+	(state_index): Compute values for new state components before
+	allocating the state, to make the code easier to understand.
+	(state_index, dfastate): Prefer A & ~B to other forms like (A & B)
+	!= A.
+	(dfastate, build_state, transit_state): In new code, prefer i++ to
+	++i in for-loop control.
+	(build_state, transit_state): In new code, prefer < to >.
+	(transit_state): Add to *PP in one assignment, rather than in a
+	loop.  Prefer !x to x == NULL.  Use xmalloc instead of xnmalloc,
+	since the size is a constant.  Do the size calculation as a signed
+	integer constant expression, so that the compiler diagnoses any
+	overflow.
+	(transit_state, free_mbdata): Tune by looping from -1 to N - 1,
+	rather than from 0 to N - 1 with a separate instance for -1.
+	(dfaexec_main): Rewrite to avoid side effects in if-part.
+	(free_mbdata): Simplify.
+
+	dfa: port to C90
+	* src/dfa.c (transit_state, dfa_supported, dfamust):
+	Don't use declarations after statements.
+	If I recall correctly, gawk still wants to port to C90.
+
+	dfa: fix context newline confusion
+	* src/dfa.c (transit_state): Fix "... & ~0" that was evidently
+	intended to be "... & ~1".  Do index calculation in a simpler way,
+	that uses just addition (Bug#21486).
+
+2016-08-16  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: improve leading "." with non-UTF8 multibyte
+	In non-UTF8 multibyte locales, matching the dot expression is very
+	slow, as the next state is calculated on demand.  This change caches
+	the result for the typical case (Bug#21486).
+
+	Compare the run times of this command before and after this change,
+	on a i5-4570 CPU @ 3.20GHz using rawhide (~fedora 22) and compiled
+	with gcc 5.1.1 20150618:
+	yes "$(printf 'a%38db\n' 0)" | head -1000000 >in
+	env LC_ALL=ja_JP.eucJP time -p \
+	src/grep .......................................... in
+	  Before: 19.10
+	  After :  0.55
+
+	* NEWS: Document this.
+	* src/dfa.c: (struct dfa_state): New members curr_dependent, mb_trindex.
+	(MAX_TRCOUNT): New constant.
+	(struct dfa): New members mb_trans, mb_trcount.
+	(state_index): Initialize new members of struct dfa_state and calculate
+	dependency on context of next character for positions for dot.
+	(dfastate): Calculate follows positions for dot if enabled.
+	(realloc_trans_if_necessary): Allocate transition tables.
+	(build_state): Use new constant and reset transition tables.
+	(transit_state): Use cache for transition from a state with the dot
+	expression.
+	(free_mbdata): Deallocate transition tables.
+
+2016-08-06  Jim Meyering  <meyering@fb.com>
+
+	tests: standardize on 10-second timeouts to avoid rare false failure
+	In a parallel test run, it is not unusual to exceed a timeout of
+	1-3 seconds.  Increase several from 3 or fewer to 10 seconds.
+	* tests/skip-device: Increase timeout from 2 to 10 seconds.
+	* tests/grep-dev-null-out: Likewise, but s/1/10/.
+	* tests/pcre-invalid-utf8-input: Likewise, but s/3/10/.
+	* tests/dfa-match: Likewise.
+	* tests/pcre-invalid-utf8-infloop: Likewise.
+	* tests/pcre-infloop: Likewise.
+	* tests/max-count-overread: Likewise.
+	* tests/invalid-multibyte-infloop: Likewise.
+	Prompted by http://bugs.gnu.org/24159.
+
+	tests/backref-multibyte-slow:: avoid false positive
+	* tests/backref-multibyte-slow: When redirecting the "fast" LC_ALL=C
+	run's output to /dev/null, we got an artificially low timing (of 0),
+	due to grep's own stdout-vs-/dev/null optimization.  With an initial
+	timing of 0 on that first run, the derived timeout for the UTF-8 run
+	(which redirects to a file) would be a mere 1 second.  The fix: also
+	redirect that first run's output to a file, not to /dev/null.
+
+2016-08-05  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: minor fix for whether dfa is "fast"
+	* src/dfa.c (dfaoptimize): When a UTF-8 optimization succeeds for
+	a DFA (it can use single-byte code paths), record that by setting
+	its ->fast flag.
+
+2016-07-25  Jim Meyering  <meyering@fb.com>
+
+	grep: print "filename:lineno:" in invalid-regex diagnostic
+	Determining the file name and line number is a little tricky because
+	of the way the regular expressions are all concatenated onto a newline-
+	separated list.  By the time grep would compile regular expressions,
+	the <filename,lineno> origin of each regexp was no longer available.
+	This patch adds a list of filename,first_lineno pairs, one per input
+	source, by which we can then map the ordinal regexp number to a
+	filename,lineno pair for the diagnostic.
+
+	* src/dfasearch.c (GEAcompile): When diagnosing an invalid regexp
+	specified via -f FILE, include the "FILENAME:LINENO: " prefix.
+	Also, when there are two or more lines with compilation failures,
+	diagnose all of them, rather than stopping after the first.
+	* src/grep.h (pattern_file_name): Declare it.
+	* src/grep.c: (struct FL_pair): Define type.
+	(fl_pair, n_fl_pair_slots, n_pattern_files, patfile_lineno):
+	Define globals.
+	(fl_add, pattern_file_name): Define functions.
+	(main): Call fl_add for each type of the following: -e argument,
+	-f argument, command-line-specified (without -e) regexp.
+	* tests/filename-lineno.pl: New file.
+	* tests/Makefile.am (TESTS): Add it.
+	* NEWS (Improvements): Mention this.
+	Initially reported by Gunnar Wolf in https://bugs.debian.org/525214
+	Forwarded to grep's bug list by Santiago Ruano Rincón as
+	http://debbugs.gnu.org/23965
+
+2016-07-24  Jim Meyering  <meyering@fb.com>
+
+	tests: add coreutils' perl-driven test framework
+	* configure.ac: Set the AM_CONDITIONAL variable, HAVE_PERL.
+	* tests/Coreutils.pm: New file.
+	* tests/CuSkip.pm: New file.
+	* tests/CuTmpdir.pm: New file.
+	* tests/no-perl: New file.
+	* tests/Makefile.am: Set up to use .pl tests:
+	(TEST_EXTENSIONS, TESTSUITE_PERL, TESTSUITE_PERL_OPTIONS): Define.
+	(SH_LOG_COMPILER, PL_LOG_COMPILER): Define.
+	(EXTRA_DIST): Add the four new file names.
+
+	doc: omit an excess word in HACKING
+
+2016-07-21  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep: always match single line only with DFA superset
+	\n cannot occur inside a multibyte character.  So an input always
+	matches single line only with DFA superset.
+
+	* src/dfasearch.c (EGexecute): Simplify it with above.
+
+2016-07-15  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: fix whitespace problems
+	* src/dfa.c: Use GNU style for pointer decls.
+
+2016-07-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	maint: modernize HACKING a bit
+	* HACKING: Remove some ancient history to simplify maintenance.
+
+2016-07-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: minor style changes for -F crash fix
+	* src/kwset.c (memoff2_kwset): Use ?: instead of if-else.
+
+2016-07-14  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep: fix -F crash when alternating duplicates
+	grep -F crashes with a pattern like 0\n0.
+	This bug was introduced in 966f6586fbce3081ce6e5e2f9b55301b0ec3d2b4.
+
+	* src/kwset.c (memoff2_kwset): If two characters are the same,
+	use memchr instead of memchr2.
+	* tests/two-chars: New test.
+	* tests/Makefile.am (TESTS): Add it.
+
+2016-07-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: fix comments to match code better
+	* src/dfa.c: Fix comments.
+
+2016-07-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: don't treat null bytes specially
+	* src/dfa.c (transit_state): Do not treat null byte specially
+	when eolbyte == '\n'.
+
+2016-07-06  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: don't distingish letter in non-POSIX locales
+	For non-POSIX locales, dfa does not support word delimiter
+	support, so remove distinction between letters and non-letters.
+	* src/dfa.c (struct dfa): Remove members initstate_letter,
+	initstate_others.  All uses removed.  New member initstate_notbol.
+	(dfaanalyze, dfaexec_main): Replace old members with new member.
+	(wchar_context): Remove.  Update callers.
+
+2016-07-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: minor cleanups for non-POSIX simplification
+	* src/dfa.c (transit_state_singlebyte): Remove unnecessary 'const'
+	from arg; we usually don't bother with 'const' on locals.
+	(transit_state_singlebyte): Omit '!= NULL' in boolean context.
+	Use assert rather than abort.
+
+2016-07-06  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: simplify for non-POSIX locales
+	Simplify the dfa code, since it no longer supports ranges,
+	collating elements, and equivalent classes in non-POSIX locales.
+	* src/dfa.c (struct dfa): Remove mb_match_lens.
+	(enum status_transit_state, match_anychar)
+	(check_matching_with_multibyte_ops, transit_state_consume_1char):
+	(State_transition): Remove.
+	(transit_state_singlebyte): Accepts pointer-to-pointer position,
+	instead of pointer, and no longer accept pointer to next state.
+	Return next state instead of status_transit_state.  All callers
+	changed.
+	(transit_state_singlebyte, transit_state): Simplify.
+	(dfaexec_main): Now transit_state is called only when next character
+	matches with ANYCHAR.
+
+2016-06-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	doc: propagate more changes from grep.texi
+	Problem reported by Björn Voigt in: http://bugs.gnu.org/23763#27
+	* doc/grep.in.1: Fix more inconsistencies with grep.texi.
+
+2016-06-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	doc: remove obsolete MS-DOS mention
+	* doc/grep.in.1: Remove obsolete discussion of MS-DOS heuristics.
+	Problem reported by Björn Voigt in: http://bugs.gnu.org/23763
+
+2016-06-09  Zev Weiss  <zev@bewilderbeest.net>
+
+	grep: do pagesize initialization and buffer allocation earlier
+	* src/grep.c (reset, main): We're going to need pagesize and buffer
+	initialized anyway, so we might as well do so unconditionally early on
+	rather than checking on every call to reset().
+	http://bugs.gnu.org/23717
+
+	grep: remove unnecessary dirdesc variable.
+	* src/grep.c (grepdirent): Remove dirdesc variable and just use
+	fts_cwd_fd directly, since the fts_options test was guaranteed to
+	succeed (and fts_cwd_fd was already being used directly in fstatat()
+	anyway).  http://bugs.gnu.org/23716
+
+	grep: convert list_files to an enum
+	* src/grep.c: Make list_files a tristate enum instead of an int.
+	http://bugs.gnu.org/23715
+
+	grep: correct a stale comment and remove dead code
+	* src/grep.c (grepdesc): The `grep()' function no longer has
+	special-case negative return values, since it no longer handles
+	directories, so don't bother checking for them.
+	http://bugs.gnu.org/23714
+
+	maint: replace bitwise with logical OR
+	* src/grep.c (main): replace bitwise ORs with logical ORs where it
+	makes sense (when dealing with boolean conditions as opposed to
+	bitmasks).  http://bugs.gnu.org/23713
+
+	maint: mark a couple of static variables const
+	* src/dfa.c (parse_bracket_exp): mark zeroclass const.
+	* src/dfasearch.c: mark patterns0 const.
+	http://bugs.gnu.org/23712
+
+2016-06-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	tests: fix similar bug in exit status test
+	* tests/grep-dir (status_range): New shell function.
+	Use it to fix bug where $? was not saved properly.
+
+2016-06-03  Zev Weiss  <zev@bewilderbeest.net>
+
+	tests: fix bug in exit status test
+	When checking $? against multiple values, save its value in another
+	variable and check that so as to avoid tests beyond the first seeing a
+	$? clobbered by earlier ones.
+
+	* tests/status: save $? in a temporary variable before testing it.
+
+2016-06-02  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: more simplification of dfaexec_main
+	* src/dfa.c (dfaexec_main): Failure at an acceptable position and demand
+	to build state is unlikely.  So go next loop without checking them after
+	a newline.  This commit induces no semantic change.
+
+2016-06-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	maint: correct attribution
+	* build-aux/git-log-fix: Fix attribution of primary Aho-Corasick patch
+
+2016-06-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: simplify -F Aho-Corasick a bit
+	This removes some tuning that complicates the code without providing
+	performance benefits that I could measure (GCC 6.1, x86-64).
+	(acexec_trans): Do not hand-unroll.  Unduplicate the code for a
+	transition step.
+
+	* src/kwset.c (struct kwset.kwsexec, bmexec, acexec_trans, acexec)
+
+2016-06-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: minor cleanups for -F Aho-Corasick
+	* NEWS: Don't claim 7x, as the value seems to be system-dependent.
+	* src/kwset.c (struct kwset.kwsexec, bmexec, acexec_trans, acexec):
+	* src/kwset.c, src/kwset.h (kwsalloc, kwsexec):
+	Don't put 'const' into the declaration when that is irrelevant to
+	the API.  More generally, don't bother with 'const' when it's only
+	a local so it is reasonably obvious to a reader that it is 'const'
+	anyway.  It would be overkill to add 'const' to all locals that
+	never change.
+	* src/kwset.c (U): Avoid unnecessary parens.
+	(treefails, memoff2_kwset, bmexec_trans, bmexec, cwexec, acexec_trans):
+	Prefer SIZE_MAX to (size_t) -1.
+	(bmexec_trans, cwexec, acexec_trans):
+	Remove attributes for static functions that no longer seem needed.
+	(memoff2_kwset): Rename from memchr2_kwset, since it returns
+	an offset, not a pointer.  All uses changed.
+	(cwexec, acexec_trans) [lint]: Remove initialization that is no
+	longer needed; at least, GCC 6.1 x86-64 does not need it.
+	(acexec_trans): Clarify code by using nesting rather than 'continue'.
+
+2016-06-02  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep: use memchr2 for two patterns of a character
+	* src/kwset.c (memchr2_kwset): Add a new function.  grep uses memchr2 to
+	search just two letters.
+	(cwexec, acexec_trans): Use it.
+
+	grep: -F multiword longest match not always needed
+	Searching multiple fixed words, grep immediately returns without longest
+	match if not needed.  Without this change, grep tries longest match for
+	multiple words even if not needed.
+	* src/kwset.c (kwsexec, acexec, cwexec, bmexec): Add a bool argument
+	for whether longest match is needed.  All callers changed.
+	* src/kwset.h (kwsexec): Update prototype.
+
+2016-06-02  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep: use Aho-Corasick algorithm to search multiple fixed words
+	Searching multiple fixed words, grep used the Commentz-Walter
+	algorithm, but this was O(m*n) and was very slow in the worst case.
+	For example:
+
+	  - input: yes `printf %040d` | head -10000000
+	  - word1: x0000000000000000000
+	  - word2: x
+
+	This change instead uses the Aho-Corasick algorithm to search multiple
+	fixed words.  It uses a high-quality trie-building function that is
+	already defined for Commentz-Walter in kwset.c.
+
+	I see 7x speed-up even for a typical case on Fedora 21 with a 3.2GHz i5
+	by this change.  Using best-of-5 trials for the benchmark:
+
+	    find /usr/share/doc/ -type f |
+	    LC_ALL=C time -p xargs.sh src/grep -Ff /usr/share/dict/linux.words >/dev/null
+
+	The results were:
+
+	    real 11.37  user 11.03  sys 0.24  [without the change]
+	    real 1.49   user 1.31   sys 0.15  [with the change]
+
+	* src/kwset.c (struct kwset): Add a new member 'mode'.
+	(kwsalloc): Use it.
+	All callers are changed.
+	(kwsincr): Using Aho-Corasick algorithm, build tries in normal order.
+	(acexec_trans, acexec): Add a new function.
+	(kwsexec): Use it.
+	* src/kwset.h (kwsalloc): Update a prototype.
+	* NEWS (Improvements): Mention it.
+
+2016-05-13  Jim Meyering  <meyering@fb.com>
+
+	maint: do not let a LANGUAGE envvar setting perturb tests
+	E.g., running "LANGUAGE=eo make check" would provoke a failure
+	of the encoding-error test, on systems that mistakenly let that
+	envvar trump the setting of LC_ALL.
+	* tests/envvar-check: New file, copied from coreutils.
+	* tests/Makefile.am (EXTRA_DIST): Add it.
+	(TESTS_ENVIRONMENT): Source it.
+	Also select TMPDIR as we do for coreutils tests.
+	Reported by Benno Schulenberg in http://bugs.gnu.org/23527.
+
+2016-05-02  Jim Meyering  <meyering@fb.com>
+
+	maint: avoid NEWS syntax-check failure
+	* NEWS: Move the mention of the /dev/null speed-up from the
+	block for 2.25 into the current, in-preparation block.
+
+2016-05-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: prefer bool for boolean
+	* src/dfa.c (syntax_bits_set, dfasyntax, using_utf8, FETCH_WC)
+	(POP_LEX_STATE, State_transition):
+	* src/dfa.h (using_utf_8):
+	Use bool for boolean.
+
+2016-05-01  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: stop exporting internal functions
+	* src/dfa.c, src/dfa.h (dfaparse, dfaanalyze, dfastate, dfainit):
+	Now static.
+
+	dfa: prefer bool at DFA interfaces
+	* src/dfa.c (struct dfa, dfasyntax, dfaanalyze, dfaexec_main)
+	(dfaexec_mb, dfaexec_sb, dfaexec_noop, dfaexec, dfacomp):
+	* src/dfa.h (dfasyntax, dfacomp, dfaexec, dfaanalyze):
+	* src/dfasearch.c (EGexecute):
+	Use bool for boolean.
+
+2016-05-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: speed up checking for character boundary
+	This should help performance with gawk; not so much with grep.
+	Suggested by Norihiro Tanaka in: http://bugs.gnu.org/18777
+	* src/dfa.c (never_trail): New static var.
+	(dfasyntax): Initialize it.
+	(skip_remains_mb): Use it to speed up a common case in Gawk.
+
+	grep: /dev/null output speedup
+	This sped up 'seq 10000000000 | grep . >/dev/null' by a factor of
+	380,000 on my platform (Fedora 23, x86-64, AMD Phenom II X4 910e,
+	en_US.UTF-8 locale).
+	* NEWS: Document this.
+	* src/grep.c (grepbuf): exit_on_match no longer implies that -q
+	was specified, so when a match is found, exit with exit_failure if
+	an error was also found.
+	(grepdesc): Omit unnecessary S_ISREG and st_ino checks.
+	out_stat.st_ino is zero if stdout is not a regular file,
+	and this cannot possibly equal st->st_ino.
+	(main): Omit duplicate initialization of exit_failure.  Do not
+	bother with isatty unless -q is not used and stdout is a character
+	special file and --color=auto and TERM says colorization is
+	possible.  Most importantly, set exit_on_match if the output is
+	/dev/null.
+	* tests/grep-dev-null-out: New test.
+	* tests/Makefile.am (TESTS): Add it.
+	* tests/status: Do not require grep to actually read all the input
+	files when the output is /dev/null and a matching line has been
+	found.
+
+2016-04-21  Jim Meyering  <meyering@fb.com>
+
+	maint: post-release administrivia
+	* NEWS: Add header line for next release.
+	* .prev-version: Record previous version.
+	* cfg.mk (old_NEWS_hash): Auto-update.
+
+	version 2.25
+	* NEWS: Record release date.
+
+2016-04-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: remove dependency on btowc
+	MirOS BSD btowc is a macro that (when GCC is being used) hardcodes
+	btowc (0x80) == WEOF regardless of locale, which contradicts
+	future POSIX in the C locale.  Instead of bothering to develop a
+	Gnulib workaround for the btowc incompatibility, use mbrtowc,
+	which we are using elsewhere and fixing anyway, and are caching so
+	it is fast here.  Problem reported by Nelson H. F. Beebe via Jim
+	Meyering in: http://bugs.gnu.org/23269#14
+	* bootstrap.conf (gnulib_modules): Remove btowc.
+	* src/dfa.c (struct dfa): Remove mbrtowc_cache member, replacing with ...
+	(mbrtowc_cache): ... this new static var.  All uses changed.
+	(dfambcache): Remove; now done by setsyntax.  Call removed.
+	(is_valid_unibyte_character): Remove.
+	(IS_WORD_CONSTITUENT): Remove this macro, replacing it with ...
+	(unibyte_word_constituent): ... this new function.  It uses
+	mbrtowc_cache rather than btowc.
+	(dfasyntax): Initialize mbrtowc_cache before using it.
+
+2016-04-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: minor doc tweaks inspired by Debian
+	Problem reported by Santiago Ruano Rincón in: http://bugs.gnu.org/22911
+	* doc/grep.in.1:
+	* doc/grep.texi (Matching Control, grep Programs)
+	(Regular Expressions):
+	Document -e, -f, and PCRE more carefully.
+
+2016-04-10  Jim Meyering  <meyering@fb.com>
+
+	maint: remove unused mbtoupper function
+	* src/searchutils.c (mbtoupper): Remove now-unused function.
+	Also remove inclusion of <assert.h>, since this change removed
+	the final use of assert.
+	* src/search.h (mbtoupper): Remove declaration.
+
+2016-04-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: in C locale, all bytes are valid characters
+	This works around glibc bug 19932:
+	https://sourceware.org/bugzilla/show_bug.cgi?id=19932
+	The actual bug fix was the update to the current version of Gnulib.
+	grep problem reported by Björn Jacke in: http://bugs.gnu.org/23234
+	* NEWS: Mention this.
+	* doc/grep.texi (File and Directory Selection): Crossref to LC_*
+	section.  Suggest why -a or LC_ALL=C might be useful.
+	(Environment Variables): Mention 'locale -a'.
+	Say that LC_CTYPE also specifies encoding, and that every
+	byte is a valid character in the C or POSIX locale.
+	* tests/c-locale: New test.
+	* tests/Makefile.am (TESTS): Add it.
+
+	build: update gnulib submodule to latest
+
+2016-04-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Give another example of binary file processing
+	Problem reported by Shlomi Fish
+	* doc/grep.texi (File and Directory Selection):
+	Document that 'q$' might match 'q' followed by a NUL
+	if --binary-files=binary is in effect.
+
+2016-04-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	tests: test egrep/fgrep help only if our grep
+	Problem reported by Christian Weisgerber in: http://bugs.gnu.org/23146
+	* tests/Makefile.am (TESTS_ENVIRONMENT):
+	Test egrep and fgrep only if they use our grep.
+
+2016-03-29  Jim Meyering  <meyering@fb.com>
+
+	tests: remove spurious test of egrep
+	* tests/reversed-range-endpoints: Do not test egrep here.
+	There is already a test of grep -E.
+	Prompted by http://bugs.gnu.org/23146
+
+2016-03-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: -Pz no longer misdiagnoses [^a]
+	Problem reported by Michael Jess.
+	* NEWS: Document this.
+	* src/pcresearch.c (Pcompile): Do not diagnose [^ when [ is unescaped.
+	* tests/pcre: Test for the bug.
+
+2016-03-22  Jim Meyering  <meyering@fb.com>
+
+	maint: move new 'Improvements' blurb into proper section
+	* NEWS (Improvements): Move this new section from within the block
+	for the already-released 2.24 into the proper "next-release" block.
+	Also, retain the 2-blank-line separator between blocks.
+
+2016-03-18  Jim Meyering  <meyering@fb.com>
+
+	maint: avoid spurious "binary file ... matches" in generated THANKS
+	* Makefile.am (THANKS): Don't apply grep to a stream containing
+	NUL bytes.  Sync this rule from the one in coreutils: it was missing
+	some improvements.
+	Reported by Bailes Magio in http://bugs.gnu.org/22899
+
+2016-03-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: -oz now outputs null bytes, not newlines
+	* NEWS: Document this.
+	* doc/grep.texi (Other Options): Clarify that -z affects output
+	as well as input data.
+	* src/grep.c (print_line_middle): Output eolbyte, not newline, if -o.
+	* tests/null-byte: Test -o too.
+	* tests/pcre-context: Adjust test to match new behavior.
+
+2016-03-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: use errno consistently in write diagnostics
+	Feature request and initial version reported by Assaf Gordon in:
+	http://bugs.gnu.org/23031
+	* NEWS: Document this.
+	* src/grep.c: Include <stdarg.h>.
+	(stdout_errno): New static var.
+	(write_error_seen): Remove; superseded by stdout_errno.
+	All uses changed.
+	(putchar_errno, fputs_errno, printf_errno, fwrite_errno)
+	(fflush_errno): New static functions.
+	(print_filename, print_sep, print_offset, print_line_head)
+	(print_line_middle, print_line_tail, prline, prtext, grep)
+	(grepdesc): Use them.
+	* tests/write-error-msg: New file.
+	* tests/Makefile.am (TESTS): Add it.
+
+2016-03-10  Jim Meyering  <meyering@fb.com>
+
+	maint: post-release administrivia
+	* NEWS: Add header line for next release.
+	* .prev-version: Record previous version.
+	* cfg.mk (old_NEWS_hash): Auto-update.
+
+	version 2.24
+	* NEWS: Record release date.
+
+2016-02-28  Jim Meyering  <meyering@fb.com>
+
+	maint: add dist-check.mk
+	This file augments "make distcheck" rules.
+	* dist-check.mk: New file, from coreutils via gzip.
+	* Makefile.am (EXTRA_DIST): Add it.
+	* cfg.mk: Include it.
+
+2016-02-21  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: -Pz is incompatible with ^ and $
+	Problem reported by Sergei Trofimovich in: http://bugs.gnu.org/22655
+	* NEWS: Document this.
+	* src/pcresearch.c (Pcompile): Warn with -Pz and anchors.
+	* tests/pcre: Test new behavior.
+
+2016-02-21  Jim Meyering  <meyering@fb.com>
+
+	tests: test cleanup
+	* tests/z-anchor-newline: Remove test artifact that would write
+	to /t/x.
+
+2016-02-20  Jim Meyering  <meyering@fb.com>
+
+	grep -z: avoid erroneous match with regexp anchor and \n in text
+	* src/dfasearch.c (EGexecute): Clear the newline_anchor bit when
+	eolbyte is not '\n'.
+	* tests/z-anchor-newline: New file.
+	* tests/Makefile.am (TESTS): Add it.
+	* NEWS (Bug fixes): Describe it.
+	Originally reported by Ulrich Mueller in
+	https://bugs.gentoo.org/show_bug.cgi?id=574662
+	Reported to us by Sergei Trofimovich as http://debbugs.gnu.org/22655
+
+	tests: convert "cmd && fail=1" to "returns_ 1 cmd || fail=1"
+	The latter is robust, while the former can silently ignore
+	failure due to signals.
+	* cfg.mk (sc_prohibit_and_fail_1): New rule, copied from coreutils.
+	* tests/long-pattern-perf: Perform the above substitution.
+	* tests/mb-non-UTF8-performance: Likewise.
+	* tests/help-version: Merge from coreutils.
+
+2016-02-09  Jim Meyering  <meyering@fb.com>
+
+	maint: add a check-very-expensive target
+	* Makefile.am (check-very-expensive): New convenience rule,
+	currently merely equivalent to check-expensive.
+
+2016-02-04  Jim Meyering  <meyering@fb.com>
+
+	maint: post-release administrivia
+	* NEWS: Add header line for next release.
+	* .prev-version: Record previous version.
+	* cfg.mk (old_NEWS_hash): Auto-update.
+
+	version 2.23
+	* NEWS: Record release date.
+
+2016-02-02  Jim Meyering  <meyering@fb.com>
+
+	gnulib: update to latest
+	Update for this "make distcheck"-fixing change:
+	> verify-tests: also remove stray test-verify.Tpo
+
+2016-02-01  Jim Meyering  <meyering@fb.com>
+
+	tests/null-byte: test another code path
+	* tests/null-byte: Also exercise the case in which there is
+	a match in the block along with the NUL byte.
+
+2016-01-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Omit excess "Binary file ... matches"
+	Problem reported in: http://bugs.gnu.org/22461
+	* src/grep.c (grep): Don't report "Binary file ... matches"
+	merely because the file contained both matches and binary data.
+	Insist that the binary data contained a match.
+	* tests/null-byte: Add a test for this.
+
+2016-01-28  Jim Meyering  <meyering@fb.com>
+
+	gnulib: update to latest
+
+2016-01-23  Jim Meyering  <meyering@fb.com>
+
+	gnulib: update to latest
+
+	maint: fix typo in NEWS: s/a/an/
+
+2016-01-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: -x now supersedes -w more consistently
+	* NEWS, doc/grep.texi (Matching Control): Mention this.
+	* src/dfasearch.c (EGexecute):
+	* src/pcresearch.c (Pcompile):
+	Don't get confused by -w if -x is also present.
+	* src/pcresearch.c (Pcompile): Remove misleading comment about
+	non-UTF-8 multibyte locales, as PCRE doesn't support them.
+	Calculate buffer sizes more carefully; the old method
+	allocated a buffer slightly too big, seemingly due to luck.
+	* tests/backref-word, tests/pcre: Add tests for this bug.
+
+	tests: omit update-copyright-tests
+	This test does not check how 'grep' itself operates, so it is
+	out of place for grep's 'make check'.  Problem reported by Sam Razavi in:
+	http://bugs.gnu.org/22376
+	* bootstrap.conf (avoided_gnulib_modules): Add update-copyright-tests.
+
+2016-01-11  Jim Meyering  <meyering@fb.com>
+
+	tests: do use "yes" but via an AWK replacement
+	Also, use sed Nq in place of head -N
+	* tests/init.cfg (yes): Define.
+	Thanks to Paul Eggert for this definition.
+	* tests/max-count-overread: Revert to using "yes".
+	* tests/mb-non-UTF8-performance: Likewise, and use
+	"sed Nq" in place of head -N.
+
+2016-01-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* tests/pcre-count: Don't assume the page size is 32kB.
+
+2016-01-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	tests: port to other POSIXish platforms
+	I tested this on Solaris 10 and AIX 7.1.
+	* tests/max-count-overread:
+	* tests/mb-non-UTF8-performance:
+	Don't assume 'yes' exists, as 'yes' is not in POSIX.
+	* tests/mb-non-UTF8-performance:
+	Don't rely on 'head -1000', as that option syntax is not POSIX.
+	* tests/pcre-count: Don't rely on "printf '\x0'".
+	* tests/unibyte-binary: Don't assume \200 is an encoding error
+	in every unibyte locale.
+
+2016-01-08  Jim Meyering  <meyering@fb.com>
+
+	tests: fix encoding-error test failure to use of printf '\xHH'
+	* tests/encoding-error: Don't rely on printf having support for \xHH
+	hexadecimal.  That is not portable.  Use \OOO octal, instead.
+
+	maint: fix typo in NEWS: s/a/an/
+
+2016-01-07  Jim Meyering  <meyering@fb.com>
+
+	mb-non-UTF8-performance: avoid FP test failure on fast hardware
+	* tests/mb-non-UTF8-performance: Don't use a fixed size.
+	Otherwise, on a fast system, the fixed-size unibyte test
+	would complete in a nominal 0 ms, which might well be
+	smaller than 1/30 of the multibyte duration, provoking
+	a false positive test failure.  Instead, increase the
+	size of the input until we obtain a unibyte duration of
+	at least 10ms.
+
+2016-01-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	doc: mention unibyte encoding fix
+	* NEWS: Document recent fix for encoding errors in unibyte locales.
+
+	grep: improve unibyte -P performance
+	This is a followon to the recent changes prompted by Bug#20526.
+	In <http://bugs.gnu.org/bug=20526#86> Norihiro Tanaka pointed out
+	that grep mistakenly assumed that unibyte locales cannot have
+	encoding errors.  Here, the mistake hurt performance significantly.
+	On Fedora 23 x86-64 in the C locale, this patch improved grep's
+	performance by a factor of 7 when run as "grep -P 'z.*a'" on the
+	output of "yes $(printf '\200\n') | head -n 1000000000".
+	* src/pcresearch.c (multibyte_locale) [HAVE_LIBPCRE]: New static var.
+	(Pcompile): Set it.
+	(Pexecute): Use it to avoid the need to call
+	buf_has_encoding_errors in unibyte locales.
+
+2016-01-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve on fix for Bug#22181
+	* src/pcresearch.c (Pexecute): Update subject when skipping past
+	easily-determined encoding errors, as this is faster than letting
+	pcre_exec skip them.  On my platform this improves performance
+	4.7x on a benchmark created via "yes $(printf '\200\200\200\200
+	\200\200\200\200\200\200\200\200\200\200\200\200\200\200\200\200x\n')
+	| head -n 1000000 >j; grep -oP y j" in a UTF-8 locale.  Rework
+	code that deals with PCRE_ERROR_BADUTF8 return, to avoid an
+	incorrect (albeit currently harmless) 'bol = false' assignment.
+
+	grep: restore -P optimization (followup fix)
+	* src/search.h (EGexecute, Fexecute, Pexecute):
+	Change decls to match new implementations.
+	I forgot to add this file to the previous commit.
+
+	grep: restore -P PCRE_NO_UTF8_CHECK optimization
+	On my platform in the en_US.utf8 locale, this makes 'grep -P "z.*a" k'
+	220x faster, where k is created by the shell command:
+	yes 'abcdefg hijklmn opqrstu vwxyz' | head -n 10000000 >k
+	* src/dfasearch.c (EGexecute):
+	* src/grep.c (execute_fp_t):
+	* src/kwsearch.c (Fexecute):
+	* src/pcresearch.c (Pexecute):
+	First arg is now char *, not char const *, since Pexecute now
+	temporarily modifies this argument.
+	* src/grep.c, src/grep.h (buf_has_encoding_errors): Now extern.
+	* src/pcresearch.c (Pexecute): Use it.  If the input is free of
+	encoding errors, use a multiline search and the PCRE_NO_UTF8_CHECK
+	option, as this is typically way faster.  This restores an
+	optimization that was removed with the recent changes for binary
+	file detection.
+
+2016-01-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix calculation of unibyte_mask
+	* src/grep.c (initialize_unibyte_mask): The old method worked for
+	UTF-8 and other typical encodings, but did not work for weird
+	encodings, e.g., one where all bytes other than 0x7f and 0x80 are
+	unibyte characters.
+
+2016-01-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: fix bug with with invalid unibyte sequence
+	This was introduced by the recent binary-data-detection changes.
+	Problem reported by Norihiro Tanaka in: http://bugs.gnu.org/20526#86
+	* src/grep.c (HIBYTE, easy_encoding, init_easy_encoding): Remove,
+	replacing with ...
+	(uword_max, unibyte_mask, initialize_unibyte_mask): ... this new
+	constant, static var, and function.  All uses changed.  The
+	unibyte_mask var generalizes the old local var hibyte_mask, which
+	worked only for encodings where every byte with 0x80 turned off is
+	a single-byte character.
+	(buf_has_encoding_errors): Return false immediately if
+	unibyte_mask is zero, not whether the current encoding is unibyte.
+	The old test was incorrect in unibyte locales in which some bytes
+	were encoding errors.
+	* tests/pcre-z: Require UTF-8 locale, since the grep -z . test now
+	needs this.  Use printf \0 rather than tr.  Port the 'grep -z .'
+	test to platforms where the C locale says '\200' is an encoding
+	error.  Use cmp rather than compare, as the file is binary and
+	so non-GNU diff might not work.
+	* tests/unibyte-binary: New file.
+	* tests/Makefile.am (TESTS): Add it.
+
+2016-01-01  Jim Meyering  <meyering@fb.com>
+
+	maint: update copyright year, bootstrap, init.sh
+	Run "make update-copyright" and then...
+
+	* gnulib: Update to latest.
+	* tests/init.sh: Update from gnulib.
+	* bootstrap: Likewise.
+
+2015-12-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	doc: clarify text vs binary match output
+	* NEWS:
+	* doc/grep.texi (File and Directory Selection):
+	Make it clearer that grep can now output matching text before
+	reporting a binary match.  Problem reported by Norihiro Tanaka in:
+	http://bugs.gnu.org/20526#83
+
+	doc: minor clarifications
+	* doc/grep.in.1, doc/grep.texi: Minor clarifications suggested by
+	Debian documentation patches.  Problem reported by Santiago Ruano
+	Rincón in: http://bugs.gnu.org/18651
+
+	grep: fix -l --line-buffer bug
+	Problem reported by Louis Sautier in: http://bugs.gnu.org/18750
+	* NEWS: Document this.
+	* src/grep.c (grep, grepdesc): If --line-buffered, flush
+	stdout after outputting newline (or null byte, if applicable).
+
+2015-12-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: remove duplicate init
+	* src/grep.c (print_line_middle): Remove duplicate initialization.
+
+	grep: report line-buffered write error right away
+	* src/grep.c (prline): When line buffered, if there is a write
+	error, report it immediately rather than waiting until the next
+	line of output.
+
+	grep: -c should keep counting after binary data
+	Problem and fix reported by Jaroslav Škarvada, and test case
+	reported by Norihiro Tanaka, in: http://bugs.gnu.org/22028
+	* NEWS: Document this.
+	* src/grep.c (grep): Don't stop counting merely because nulls seen.
+	* tests/pcre-count: New file.
+	* tests/Makefile.am (TESTS): Add it.
+
+	dfa: port to tinycc
+	* src/dfa.c (add_utf8_anychar): Put 'const' after type.
+	Problem reported by Aharon Robbins in:
+	http://bugs.gnu.org/22260
+
+	grep: be less picky about encoding errors
+	This fixes a longstanding problem introduced in grep 2.21,
+	which is overly picky about binary files.
+	* NEWS:
+	* doc/grep.texi (File and Directory Selection): Document this.
+	* src/grep.c (input_textbin, textbin_is_binary, buffer_textbin)
+	(file_textbin):
+	Remove.  All uses removed.
+	(encoding_error_output): New static var.
+	(buf_has_encoding_errors, buf_has_nulls, file_must_have_nulls):
+	New functions, which reuse bits
+	and pieces of the removed functions.
+	(lastout, print_line_head, print_line_middle, print_line_tail, prline)
+	(prpending, prtext, grepbuf):
+	Avoid use of const, now that we have
+	functions that require modifying a sentinel.
+	(print_line_head): New arg LEN.  All uses changed.
+	(print_line_head, print_line_tail):
+	Return indicator whether the output line was printed.
+	All uses changed.
+	(print_line_middle): Exit early on encoding error.
+	(grep): Use new method for determining whether file is binary.
+	* src/grep.h (enum textbin, TEXTBIN_BINARY, TEXTBIN_UNKNOWN)
+	(TEXTBIN_TEXT, input_textbin): Remove decls.  All uses removed.
+	* src/pcresearch.c (Pexecute): Remove multiline optimization,
+	since the main program no longer checks for encoding errors on input.
+	* tests/encoding-error: New file.
+	* tests/Makefile.am (TESTS): Add it.
+
+2015-12-29  Jim Meyering  <meyering@fb.com>
+
+	maint: correct (make sorted) order of test file names
+	* tests/Makefile.am (TESTS): Insert new test name in sorted order.
+
+2015-12-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: --exclude matches trailing parts of args
+	Problem reported by Vincent Lefevre in:
+	http://bugs.gnu.org/22144
+	* NEWS:
+	* doc/grep.texi (File and Directory Selection): Document this.
+	* src/grep.c (excluded_patterns, excluded_directory_patterns):
+	Now 2-element arrays, with one element for subfiles and another
+	for command-line args.  All uses changed.  This implements the change.
+	(exclude_options): New function.
+	* tests/include-exclude: Test the change.
+
+2015-12-18  Jim Meyering  <meyering@fb.com>
+
+	grep -oP: don't infloop when processing invalid UTF8 preceding a match
+	* src/pcresearch.c (Pexecute): When advancing SUBJECT past an
+	encoding error, don't blindly set P to that new value, since we
+	will soon compute SEARCH_OFFSET = P - SUBJECT, and mistakenly
+	making that difference too small would allow us to match some
+	previously-processed text, resulting in an infinite loop.
+	* NEWS (Bug fixes): Mention it.
+	* THANKS.in: Add Christian's name and email address.
+	* tests/pcre-invalid-utf8-infloop: New file.
+	* tests/Makefile.am (TESTS): Add it.
+	Reported by Christian Boltz in http://debbugs.gnu.org/22181
+	Introduced by commit, v2.21-37-g14f8e48.
+
+2015-11-04  Jim Meyering  <meyering@fb.com>
+
+	tests: mark performance-related tests as expensive
+	These performance-related tests are slightly failure prone due to
+	varying system load during the two runs.
+	Marking these tests as "expensive" makes it so they are no longer run
+	via "make check". You can still run them via make "check-expensive".
+	This makes them less likely to be run by regular users.
+	* tests/long-pattern-perf: Use expensive_.
+	* tests/mb-non-UTF8-performance: Likewise.
+	Reported by Jaroslav Skarvada in http://debbugs.gnu.org/21826
+	and by Andreas Schwab in http://debbugs.gnu.org/21812.
+
+2015-11-01  Jim Meyering  <meyering@fb.com>
+
+	maint: post-release administrivia
+	* NEWS: Add header line for next release.
+	* .prev-version: Record previous version.
+	* cfg.mk (old_NEWS_hash): Auto-update.
+
+	version 2.22
+	* NEWS: Record release date.
+
+	tests: pcre-jitstack: upon failure, retry with no stack size limit
+	* tests/pcre-jitstack: Don't let an example that provokes inordinate
+	stack space use cause a test failure.  Thanks to reports from and
+	analysis by Bruce Dubbs; see http://debbugs.gnu.org/21755
+
+2015-10-27  Jim Meyering  <meyering@fb.com>
+
+	maint: update THANKS.in
+	* THANKS.in: Add name+email of those who found and reported
+	the bug that made grep -E '^x|x$' match any "x".
+
+2015-10-25  Zev Weiss  <zev@bewilderbeest.net>
+
+	dfa: plug a memory leak in dfamust
+	* src/dfa.c (dfamust): Ensure MP is freed, by refraining
+	from returning early when, at "done:" *RESULT is NULL.
+
+2015-10-25  Jim Meyering  <meyering@fb.com>
+
+	gnulib: update to latest
+	* gnulib: Pull in one more portability fix:
+	  stdalign: port to Sun C 5.9
+
+2015-10-24  Jim Meyering  <meyering@fb.com>
+
+	gnulib: update to latest, for portability fixes
+	* gnulib: Pull in changes like these:
+	  fts: port to C11 alignof
+	  stdalign: work around pre-4.9 GCC x86 bug
+
+	maint: NEWS: correct/amend
+	* NEWS: Move the long-regexp-performance-improvement from
+	"Bug fixes" to "Improvements."  Say more and include an example.
+	The -Fw degradation was introduced in commit v2.18-125-g94555dd
+
+	tests: avoid spurious failure on OpenBSD 5.8
+	* tests/fedora: Don't rely on "diff - FILE" reading from stdin.
+	Reported privately by Nelson Beebe.
+
+2015-10-17  Jim Meyering  <meyering@fb.com>
+
+	gnulib: update to latest; also bootstrap and tests/init.sh
+	* bootstrap: Update from gnulib.
+	* tests/init.sh: Likewise.
+	* gnulib: Update submodule to latest.
+
+	build: avoid spurious bootstrap failure involving pkg.m4
+	Running ./bootstrap could fail mistakenly at the very end in
+	its attempt to obtain a copy of pkg.m4.  It would search only
+	$(aclocal --print-ac-dir) and some other directories, but not
+	those listed in $(aclocal --print-ac-dir)/dirlist.
+	* bootstrap.conf (bootstrap_post_import_hook): Also search the
+	directories named in $(aclocal --print-ac-dir)/dirlist when that
+	file exists with nonzero size.
+
+2015-10-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	maint: add news item
+	* NEWS: Document grep -Fw speedup.
+
+	grep: simplify previous change
+	* src/grep.c (main): Simplify recently-changed grep -Fw test.
+
+2015-10-16  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep: use grep matcher for grep -Fw when unibyte
+	In single byte locales with grep -Fw, prefer the grep matcher to the
+	kwset matcher, as the former uses KWset and a DFA, whereas the latter
+	calls kwsexec many times until it matches a word.
+	* src/grep.c (main): Change pattern for fgrep into grep for grep -Fw in
+	single byte locales.
+
+2015-10-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: use memchr/memrchar
+	* src/kwsearch.c (Fexecute): Prefer memchr and memrchr to doing it
+	by hand.
+
+2015-10-16  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep: improve performance of grep -Fw
+	* src/kwsearch.c (Fexecute): grep -Fw examined whether the previous
+	character is a word character after matching from the head of the
+	buffer.  It is extremely slow.  Now, if grep found a potential match,
+	it looks for the previous newline, and examines from there.
+
+2015-10-13  Jim Meyering  <meyering@fb.com>
+
+	maint: use single quote rather than UTF-8 multi-byte version
+	* tests/backref-alt: Translate unnecessary non-ASCII in comment.
+
+2015-10-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: make the executable a bit smaller
+	* src/dfa.c (dfamust): Hoist MB_CUR_MAX calculation out of loops.
+
+2015-10-13  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: fix bug in alternate of sub-patterns that differ only in constraints
+	Fix a bug where a line incorrectly matches alternates of sub-patterns
+	that differ only in the constraints, e.g., the ERE '^a|a$'.
+	Reported by Greg Boyd in: http://debbugs.gnu.org/21670
+	* src/dfa.c (dfamust): For a pattern with constraints, check that it is
+	matched including the constraints, to judge whether it is exact.
+
+	dfa: fix off-by-one error
+	* src/dfa.c (dfamust): Fix off-by-one error in computing 'must' length,
+	which caused the 'must' to be too short.  See:
+	http://bugs.gnu.org/21670#28
+
+2015-10-12  Jim Meyering  <meyering@fb.com>
+
+	doc: NEWS: mention a bug fix
+	* NEWS (Bug fixes): Describe it.
+	This bug was introduced by commit v2.18-85-g2c94326
+	and fixed by commit v2.21-51-g256a4b4.
+
+2015-10-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	tests: add test case for Bug#21670
+	* tests/options: Add test #4 to catch Bug#21670.
+	Also, do not overescape # in shell strings.
+
+2015-09-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Add test for pop_fail_stack bug
+	Problem reported by Hanno Böck in: http://bugs.gnu.org/21513
+	If you use --with-included-regex the bug fix is in gnulib, here:
+	http://git.savannah.gnu.org/cgit/gnulib.git/commit/?id=5513b40999149090987a0341c018d05d3eea1272
+	If you use glibc, the bug fix has not been installed yet.
+	* tests/Makefile.am (XFAIL_TESTS): Add backref-alt if system matcher.
+	(TESTS): Add backref-alt.
+	* tests/backref-alt: New file.
+	* tests/triple-backref: Remove unused var.
+	Don't skip if tested with glibc, as Makefile.am now handles this.
+
+	build: update gnulib submodule to latest
+
+2015-08-19  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep: avoid use of uninitialized variable
+	EGexecute would use "backref" uninitialized.
+	While that could have no bearing on correctness, it could
+	impact performance, via an unnecessary use of regexp.
+	* src/dfasearch.c (EGexecute): Initialize backref.
+	Reported as http://debbugs.gnu.org/21273
+	Introduced by commit v2.21-55-gea0ebaa.
+
+2015-08-12  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep: remove fgrep code for case insensitive match
+	The fgrep matcher is no longer called in case insensitive matching,
+	so remove the code to support it.
+	* src/kwsearch.c (mb_case_map_apply): Remove function.
+	(Fexecute): Remove now-unused code.
+
+2015-08-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: optimize [x-x]
+	* src/dfa.c (parse_bracket_exp): Treat [x-x] as if it were [x].
+	This also pacifies GCC, which otherwise complains about wc2
+	being set but not used.
+
+2015-08-12  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: remove unused multibyte support
+	Now regex should be used for range, collating element, equivalent class
+	in non POSIX locales.  So remove code to support these features.
+	* dfa.c (struct mb_char_classes): Remove members ch_classes,
+	nch_classes, ranges, nranges, equivs, nequivs, coll_elems, ncoll_elems.
+	All uses removed.
+	(match_mb_charset): Remove function.
+
+2015-08-01  Jim Meyering  <meyering@fb.com>
+
+	tests: mb-non-UTF8-performance: use new function
+	* tests/mb-non-UTF8-performance: Rewrite to use
+	the user-time measuring function in init.cfg.
+
+	tests: long-pattern-perf: measure user time, not elapsed
+	Measuring user time makes this test less prone to false
+	positive failure, and also lets us use a tighter bound.
+	* tests/long-pattern-perf: Measure elapsed user time rather than
+	wall-clock time, to permit a tighter bound on the ratio of
+	N-to-10N timings.  Suggested by Giuseppe Ottaviano.
+	Also, use regexps built from mostly 5-digit numbers, so that the 10:1
+	ratio applies to lines of "seq" output as well as to total bytes.
+
+	tests: new function to measure elapsed user time
+	* tests/init.cfg (user_time_): New function.
+
+2015-07-25  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: remove word delimiter support for multibyte locales
+	DFA supports word delimiter expressions, but it does not behave
+	correctly for multibyte locales.  Even if it were to be fixed,
+	the DFA matcher's performance would be no better than that of regex.
+	Thus, this change removes DFA support for word delimiter expressions
+	in multibyte locales.
+
+	* src/dfa.c (dfa_supported): Return false also when a pattern uses any
+	word delimiter expression in a multibyte locale.
+
+2015-07-25  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: avoid execution for a pattern including an unsupported expression
+	If a pattern includes a construct unsupported by the DFA matcher,
+	the DFA search would fail in most cases.  Make dfaexec immediately
+	return for any such pattern.
+
+	* src/dfa.c (struct dfa_state) [has_backref, has_mbcset]: Remove members
+	and all uses.
+	(dfaexec_main): Remove 'backref' parameter.  Update callers.
+	(dfaexec_noop): New function.
+	(dfa_supported): New function.
+	(dfassbuild): Remove now-unused code.
+	(dfacomp): When a pattern uses a DFA-unsupported construct, do not
+	waste time performing any further analysis.
+
+2015-07-19  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: DEBUG: print detail of DFA states
+	When compiled with -DDEBUG, grep outputs tokens etc.
+	With this change, also print DFA states and transitions.
+	This change is very useful when debugging those.
+
+	* src/dfa.c (prtok) [DEBUG]: Change `%c' to `%02x' in printf format.
+	(state_index) [DEBUG]: Print detail of new state.
+	(dfastate) [DEBUG]: Print detail of DFA states.
+	Reported as http://debbugs.gnu.org/18707
+
+2015-07-18  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	tests: sjis-mb: accept two more locales
+	* tests/sjis-mb: Accept the ja_JP.SJIS and ja_JP.PCK locales
+	as well as ja_JP.SHIFT_JIS, so this test is less likely to
+	be skipped unnecessarily.  Reported as http://bugs.gnu.org/18983
+
+2015-07-18  Jim Meyering  <meyering@fb.com>
+
+	tests: add a test for the performance fix
+	* tests/long-pattern-perf: New file.
+	* tests/Makefile.am (TESTS): Add it.
+
+2015-07-18  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: speed up handling of long pattern
+	DFA tries to find a long sequence of characters that must appear
+	in any matching line.  However, when a pattern is long (length N),
+	it is very slow, because it makes O(N^2) strstr calls.
+	This change reduces that to O(N) by processing each sequence of
+	adjacent "regular" characters as a group.
+
+	Compare the run times of this command before and after this change:
+	(on a i7-4770S CPU @ 3.10GHz using rawhide (~fedora 22) and compiled
+	with gcc 6.0.0 20150627)
+	  : | env time -f %e grep -f <(seq -s '' 9999)
+	  Before: 0.85
+	   After: 0.02
+
+	* src/dfa.c (dfamust): Process each string of concatenated normal
+	characters as a unit.
+	* NEWS (Improvement): Mention it.
+	Prompted by a bug report and patch by Ivan Yanikov
+	in http://bugs.gnu.org/15191#5
+
+2015-07-17  Jim Meyering  <meyering@fb.com>
+
+	tests: fix mis-applied patch.
+	* tests/include-exclude: I applied "|sort" to the wrong creation
+	of "out", and didn't push the same patch that I'd tested.
+
+	tests: avoid FS-dependent false-positive failure
+	* tests/include-exclude: Sort file name list, so that this test
+	is not sensitive to the order in which those names are returned
+	via readdir. I noticed the failure on a Fedora 21 system using ext4.
+	Also fix a typo: s/framework_failure+/framework_failure_/
+
+2015-07-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: fix bug with --exclude-dir and command line
+	Reported by Aron Griffis in: http://bugs.gnu.org/21027
+	* NEWS: Document this.
+	* src/grep.c (grepdirent): Don't check whether the file is skipped
+	when on the command line, as that's the caller's responsibility.
+	(main): Anchor the exclude patterns.
+	* tests/include-exclude: Adjust test case to match fixed behavior.
+	Add some more test cases.
+
+	tests: fix $? typo in null-byte
+	* tests/null-byte: Don't assume $? survives an invocation of 'test'.
+
+2015-07-05  Jim Meyering  <meyering@fb.com>
+
+	maint: dfa: used unsigned types where appropriate
+	* src/dfa.c (case_folded_counterparts): Return unsigned int, not int.
+	Change type of two locals to unsigned int, to reflect that their
+	values are never negative.
+	(parse_bracket_exp): Adjust type of result at each use, as well
+	as that of related index variables.
+
+2015-07-04  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: build struct dfamust on demand
+	If we won't use KWset, do not build a "struct dfamust".
+	Now it is built only when needed.
+	* src/dfa.c (struct dfa) [musts]: Remove member.
+	(dfacomp): Don't build dfamust here.
+	(dfamustfree): New function to free a struct dfamust.
+	(dfamust): Make it a global function, and make it return a pointer
+	to a malloc'd struct dfamust.
+	(dfamusts): Remove it.
+	* src/dfa.h (struct dfamust) [next]: Remove member.
+	In the implementation preceding this patch, there was
+	never more than one of these in a given "struct dfa".
+	(dfamustfree, dfamust): Add prototypes.
+	(dfamusts): Remove prototype.
+	(dfaalloc): Declare with _GL_ATTRIBUTE_MALLOC.
+	To make that symbol usable there, move the inclusion
+	of "xalloc.h" from dfa.c to this file, dfa.h.
+	* src/dfasearch.c (kwsmusts): Adapt to use the new interface.
+	Update the comments to reflect reality.
+	This addresses http://bugs.gnu.org/17715
+
+2015-07-04  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: use recent gnulib syntax bits
+	* src/grep.c (Gcompile, Ecompile): Use plain RE_SYNTAX_GREP
+	and RE_SYNTAX_EGREP, now that we assume a recent-enough gnulib.
+
+	maint: ignore gendocs_template_min
+	* doc/.gitignore: Add '/gendocs_template_min'.
+
+	build: update gnulib submodule to latest
+
+	dfa: '.' and '[^x]' now consistently match newline
+	* src/dfa.c (parse_bracket_exp, lex, add_utf8_anychar)
+	(match_anychar): RE_DOT_NEWLINE and RE_HAT_LISTS_NOT_NEWLINE
+	are about LF, not about eolbyte.  This patch does not affect
+	'grep', but may affect other users of dfa.c.
+
+	grep: -z '[^x]' now consistently matches newline
+	Problem reported by Norihiro Tanaka in: http://bugs.gnu.org/20974#19
+	* NEWS: Document this.
+	* src/grep.c (Gcompile, Ecompile): Clear RE_HAT_LISTS_NOT_NEWLINE.
+	* tests/utf8-bracket: Test this.
+
+2015-07-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: -z '.' now consistently matches newline
+	Problem reported by Balazs Kezes in: http://bugs.gnu.org/20974
+	* NEWS: Document this.
+	* tests/utf8-bracket: New file, to test for this bug.
+	* src/grep.c (Gcompile, Ecompile): Also specify RE_DOT_NEWLINE.
+	* tests/Makefile.am (TESTS): Add it.
+
+	grep: simplify print_line_middle slightly
+	* src/grep.c (print_line_middle): Simplify.
+
+	grep: don't mishandle left context in -P
+	http://bugs.gnu.org/20957
+	* src/pcresearch.c (jit_exec): New arg SEARCH_OFFSET.
+	Caller changed.
+	(Pexecute): Pass the left context to pcre_exec, so that PCRE
+	regular-expression matching can see it.
+	* tests/pcre-context: New file, to test for this bug.
+	* tests/Makefile.am (TESTS): Add it.
+
+2015-06-28  Jim Meyering  <meyering@fb.com>
+
+	tests/case-fold-backref: factor test
+
+2015-06-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: don't hang on command-line fifo if -D skip
+	* NEWS: Document this.
+	* src/grep.c (skip_devices):
+	New function, with code taken from grepdirent.
+	(grepdirent): Use it.  Avoid an unnecessary initialization.
+	(grepfile): If skipping devices, open files with O_NONBLOCK.
+	Throw in O_NOCTTY while we're at it.
+	(grepdesc): Skip devices here, too.  Not only does this fix the
+	bug, it fixes an unlikely race condition if some other process
+	renames a device between fstatat and openat.
+	* tests/skip-device: Add a test for this bug.
+
+	grep: minor tweaks
+	* src/grep.c (main): Change recently-added static vars to be
+	constants, which makes them sharable.  Prefer 'return' to 'exit'
+	when returning/exiting from 'main'.  Move decl closer to first use
+	and rename local from 'ok' (which was confusing) to 'status'.
+	Prefer named constant STDOUT_FILENO to unnamed constant 1.
+
+2015-06-26  Jim Meyering  <meyering@fb.com>
+
+	maint: unify three argv-processing calls
+	* src/grep.c (main): Unify three calls to grep_commandline_arg.
+
+	maint: alphabetize anonymous enum member names
+
+2015-05-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	test: tighten tests for bracket exprs
+	* tests/posix-bracket: Test '[a-a[.-.]--]'.
+	Also, test that failures are with status 1
+	(nonmatching data), not status 2 (invalid expressions).
+
+2015-04-26  Jim Meyering  <meyering@fb.com>
+
+	maint: update bootstrap from gnulib
+	* bootstrap: Update from gnulib.
+
+	maint: reword a diagnostic not to trigger leading capital check
+	* src/pcresearch.c: Reword diagnostic to avoid "make syntax-check"
+	failure.
+
+	maint: sort test names in tests/Makefile.am and add syntax-check rule
+	* cfg.mk (sc_sorted_tests): New rule.
+	* tests/Makefile.am (TESTS): Alphabetize.
+
+2015-04-25  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: make find_pred return NULL for an invalid predicate
+	This could never happen when invoked via grep, but could have triggered
+	a bug if dfa.c's find_pred function were invoked by some other program.
+	* src/dfa.c (find_pred): Return NULL for an invalid predicate.
+	* tests/invalid-char-class: New file to test for this.
+	* tests/Makefile.am (TESTS): Add that new file name to the list.
+	This addresses http://debbugs.gnu.org/18631
+
+2015-04-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	build: improve pkg-config doc and error handling
+	Error-handling improvement suggested by Mike Frysinger in:
+	http://bugs.gnu.org/16757#29
+	* NEWS: Document pkg-config changes.
+	* README-prereq: pkg-config is now a prereq when building from
+	repository.
+	* m4/pcre.m4 (gl_FUNC_PCRE): Report an error if pcre is explicitly
+	requested but not available.  Defer to user-supplied PCRE_CFLAGS
+	and PCRE_LIBS.
+
+	build: remove typo and don't bother with /usr/include/pcre
+	Problem reported by Holger Bruenjes.
+	* m4/pcre.m4: Remove test for /usr/include/libpng (a typo).
+	Come to think of it, don't bother worrying about
+	/usr/include/pcre, as hosts with that problem can use pkg-config
+	or configure with CFLAGS by hand.
+
+	build: use pkg-config (if available) to configure libpcre
+	Problem reported by Mike Frysinger in: http://bugs.gnu.org/16757
+	* bootstrap.conf (bootstrap_post_import_hook):
+	Copy pkg-config's pkg.m4.
+	* configure.ac: Invoke PKG_PROG_PKG_CONFIG.
+	* m4/pcre.m4 (gl_FUNC_PCRE): Rewrite to use pkg-config if
+	available, and to test that pcre_compile can be linked to.
+	* src/Makefile.am (AM_CFLAGS): Add PCRE_CFLAGS.
+	(grep_LDADD): Add PCRE_LIBS.
+	* src/pcresearch.c: Simply include <pcre.h> if HAVE_LIBPCRE,
+	since 'configure' arranges for the appropriate -I option now.
+
+2015-03-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: output "." file name in diagnostic
+	This is bug C as reported by David Grayson in:
+	http://bugs.gnu.org/16444#18
+	This bug occurs only in obscure circumstances, and I didn't see
+	how to write a reasonable test case for it.
+	* src/grep.c (filename_prefix_len): Remove, replacing with ...
+	(omit_dot_slash): New static var.  All uses of the former replaced
+	with uses of the latter.
+	(grepdirent): Don't add 2 if the filename is just ".".
+
+	egrep, fgrep: just use what's in PATH
+	* src/egrep.sh: Don't monkey with PATH; just use whatever 'grep'
+	is in the path.  This is simpler, and lets the user specify
+	default options with a script for only grep, with no need for
+	egrep and fgrep scripts.
+	Fixes: bug#19998
+
+	doc: give a script wrapper example
+	* doc/grep.texi (Environment Variables): Give an example of a
+	wrapper script, as an alternative to using GREP_OPTIONS.
+	Fixes: bug#19998
+
+	doc: clarify how -a matches
+	* doc/grep.in.1, doc/grep.texi (File and Directory Selection):
+	Give an example of how non-text bytes affect pattern matching in
+	binary files.
+	Fixes: bug#20080
+
+2015-02-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Cover the non-INSTALL case
+	* README: Mention what to do if there is no INSTALL file.
+	Fixes: bug#19928
+
+2015-02-11  Jim Meyering  <meyering@fb.com>
+
+	maint: use ASAN-poisoning more carefully
+	The ASAN-poisoning instituted by commit v2.21-14-g1555185 was
+	incomplete, since the poisoned tail of the read buffer could well
+	be the target of a legitimate follow-on read.  To accommodate that,
+	we must unpoison each such region just before beginning fillbuf's
+	read loop.
+	* src/grep.c [HAVE_ASAN] (asan_poison): Define.
+	(clear_asan_poison): Define.
+	(fillbuf): Clear before reading, since we are likely to read
+	into memory that was poisoned on the preceding iteration.
+	* tests/two-files: New file, to test for this.
+	* tests/Makefile.am (TESTS): Add it.
+
+2015-02-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Grow the JIT stack if it becomes exhausted
+	Problem reported by Oliver Freyermuth in: http://bugs.gnu.org/19833
+	* NEWS: Document the fix.
+	* tests/Makefile.am (TESTS): Add pcre-jitstack.
+	* tests/pcre-jitstack: New file.
+	* src/pcresearch.c (NSUB): Move decl earlier, since it's needed
+	earlier now.
+	(jit_stack_size) [PCRE_STUDY_JIT_COMPILE]: New static var.
+	(jit_exec): New function.
+	(Pcompile): Initialize jit_stack_size.
+	(Pexecute): Use new jit_exec function.  Report a useful diagnostic
+	if the error is PCRE_ERROR_JIT_STACKLIMIT.
+
+2015-02-01  Jim Meyering  <meyering@fb.com>
+
+	maint: reference CVE-2015-1345 from NEWS
+	* NEWS: Mention the CVE that was addressed by v2.21-13-g83a95bd,
+	"grep -F: fix a heap buffer (read) overrun".
+
+2015-01-18  Jim Meyering  <meyering@fb.com>
+
+	maint: convert "goto" to "continue" and remove now-spurious label
+	* src/kwset.c (bmexec_trans): Using "goto big_advance" here is
+	equivalent to using "continue".  Make that change and remove
+	the now-unused label.
+
+2015-01-10  Jim Meyering  <meyering@fb.com>
+
+	tests: add support for ASAN memory poisoning
+	This lets us reliably detect with ASAN some UMR bugs
+	that would otherwise be detectable only some of the time
+	with MSAN.  Use __asan_poison_memory_region to mark the unused
+	portion of a read buffer as inaccessible.  Then, with ASAN,
+	any attempt to access those bytes results in an ASAN abort.
+	* src/system.h: Include "ignore-value.h".
+	(__has_feature): Define.
+	(HAVE_ASAN): Define when address sanitizer is enabled.
+	[HAVE_ASAN]: Declare these two __asan_* symbols.
+	[!HAVE_ASAN] (__asan_poison_memory_region): Define stub.
+	[!HAVE_ASAN] (__asan_unpoison_memory_region): Likewise.
+	* src/grep.c: Use __asan_poison_memory_region.
+
+2015-01-09  Yuliy Pisetsky  <ypisetsky@fb.com>
+
+	grep -F: fix a heap buffer (read) overrun
+	grep's read buffer is often filled to its full size, except when
+	reading the final buffer of a file.  In that case, the number of
+	bytes read may be far less than the size of the buffer.  However, for
+	certain unusual pattern/text combinations, grep -F would mistakenly
+	examine bytes in that uninitialized region of memory when searching
+	for a match.  With carefully chosen inputs, one can cause grep -F to
+	read beyond the end of that buffer altogether.  This problem arose via
+	commit v2.18-90-g73893ff with the introduction of a more efficient
+	heuristic using what is now the memchr_kwset function. The use of
+	that function in bmexec_trans could leave TP much larger than EP,
+	and the subsequent call to bm_delta2_search would mistakenly access
+	beyond end of the main input read buffer.
+
+	* src/kwset.c (bmexec_trans): When TP reaches or exceeds EP,
+	do not call bm_delta2_search.
+	* tests/kwset-abuse: New file.
+	* tests/Makefile.am (TESTS): Add it.
+	* THANKS.in: Update.
+	* NEWS (Bug fixes): Mention it.
+
+	Prior to this patch, this command would trigger a UMR:
+
+	  printf %0360db 0 | valgrind src/grep -F $(printf %019dXb 0)
+
+	  Use of uninitialised value of size 8
+	     at 0x4142BE: bmexec_trans (kwset.c:657)
+	     by 0x4143CA: bmexec (kwset.c:678)
+	     by 0x414973: kwsexec (kwset.c:848)
+	     by 0x414DC4: Fexecute (kwsearch.c:128)
+	     by 0x404E2E: grepbuf (grep.c:1238)
+	     by 0x4054BF: grep (grep.c:1417)
+	     by 0x405CEB: grepdesc (grep.c:1645)
+	     by 0x405EC1: grep_command_line_arg (grep.c:1692)
+	     by 0x4077D4: main (grep.c:2570)
+
+	See the accompanying test for how to trigger the heap buffer overrun.
+
+	Thanks to Nima Aghdaii for testing and finding numerous
+	ways to break early iterations of this patch.
+
+2015-01-08  Jim Meyering  <meyering@fb.com>
+
+	grep: avoid false-positive UMR
+	For some inputs, valgrind would report an uninitialized
+	memory read error, but it was harmless.
+	* src/grep.c (fillbuf): Initialize those trailing bytes.
+
+2015-01-01  Jim Meyering  <meyering@fb.com>
+
+	gnulib: update to latest
+
+	maint: update copyright year ranges to include 2015
+	Run "make update-copyright".  Also, ...
+	* grep.texi: Update manually, converting each "--" to "-".
+
+2014-12-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	doc: document binary-data heuristic better
+	Problem reported by Martin Hoch in: http://bugs.gnu.org/19388
+	* doc/grep.texi (File and Directory Selection):
+	Document what non-text bytes are.
+	(Usage): Fix cross reference.
+
+2014-12-12  Jim Meyering  <meyering@fb.com>
+
+	maint: fix a new "make syntax-check" failure
+	* tests/dfa-match-aux.c: s/can not/cannot/
+
+2014-12-12  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	build: avoid build failure with --enable-gcc-warnings and no PCRE
+	* src/pcresearch.c [HAVE_LIBPCRE] (empty_match): Guard the declaration
+	of this PCRE-only variable.
+
+2014-12-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	tests: port fmbtest to CentOS 6 and earlier
+	* tests/fmbtest: Port to platforms where the 'sed' pattern
+	'[^0-9]' does not match every non-digit character.  Problem
+	reported by Norihiro Tanaka in: http://bugs.gnu.org/19293
+
+2014-12-06  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: simplify dfaexec
+	* src/dfa.c (dfaexec): Simplify by rearrangement of IF conditions.
+	This commit induces no semantic change, and reverts part of commit
+	v2.5.4-144-gbafa134.
+
+2014-12-06  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: avoid invalid match or infinite loop in unused matching mode
+	Neither grep nor gawk uses this DFA code in its matching mode,
+	since each always calls dfacomp with a nonzero final argument.
+	However, when used in that mode, it had bug:
+	After failing to match in matching mode, it should return NULL,
+	but instead would either report a false match or enter an
+	infinite loop.
+
+	* src/dfa.c (dfaexec_main): After failing to match in matching mode
+	return NULL, rather than transitioning to the next state.
+	* tests/dfa-match: Add a new test.
+	* tests/dfa-match-aux.c: Add a new program to exercise this
+	otherwise-unused part of dfa.c.
+	* tests/Makefile.am: Add a rule to build new test.
+	(check_PROGRAMS): Add dfa-match-aux.
+	(AM_CPPFLAGS): Add -I$(top_srcdir)/src.
+	(TESTS): Add dfa-match.
+	* cfg.mk (exclude_file_name_regexp--sc_bindtextdomain):
+	(exclude_file_name_regexp--sc_prohibit_atoi_atof):
+	Exempt the new test file from some syntax-check rules.
+
+2014-12-04  Santiago Ruano Rincón  <santiago@debian.org>
+
+	doc: document grep-2.11 change in behavior of -r, --recursive
+	* doc/grep.texi (--recursive, -r): Mention the new behavior
+	of recursively searching "." when there is no FILE argument.
+	* doc/grep.in.1: Likewise.
+	That change first appeared in grep-2.11, released on 2012-03-02.
+
+2014-11-24  Jim Meyering  <meyering@fb.com>
+
+	maint: correct for four Author: name misspellings
+	* .mailmap: Correct for misspelling in Norihiro Tanaka's last name
+	as listed in four commit Author: fields: s/Norihirio/Norihiro/
+
+2014-11-23  Jim Meyering  <meyering@fb.com>
+
+	maint: post-release administrivia
+	* NEWS: Add header line for next release.
+	* .prev-version: Record previous version.
+	* cfg.mk (old_NEWS_hash): Auto-update.
+
+	version 2.21
+	* NEWS: Record release date.
+
+2014-11-21  Jim Meyering  <meyering@fb.com>
+
+	tests: sjis-mb: remove now-obsolete and failing sub-tests
+	* tests/sjis-mb: Commit v2.18-123-geb3292b changed how grep
+	handles patterns with encoding errors.  These SJIS tests are
+	skipped so often that we didn't notice until now that there were
+	two tests of that changed behavior, and that on any system with
+	the ja_JP.SHIFT_JIS locale, they would always fail.  Remove those
+	two tests, since this functionality is well tested separately,
+	via tests/prefix-of-multibyte.
+
+2014-11-20  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep -F could erroneously fail to match in non-UTF8 multibyte locales
+	This fixes a bug that can strike only when using a non-UTF8 multibyte
+	locale like ja_JP.SHIFT_JIS.
+
+	Consider this example: it would mistakenly fail to match before
+	this patch:
+
+	  printf '\203AA\n'|LC_ALL=ja_JP.SHIFT_JIS src/grep -F A
+
+	When searching for a single byte that happens to be the latter
+	byte of a multibyte character, and the target byte also follows
+	that multibyte character, grep -F would advance an internal pointer
+	by one byte too many, thus missing the target byte.  A test case
+	for this bug is already included in tests/sjis-mb.
+
+	* src/kwsearch.c (Fexecute): Skip one byte less, after matched middle of a
+	multi-byte character.  Introduced by commit v2.18-119-gfb7d538.
+
+2014-11-17  Jim Meyering  <meyering@fb.com>
+
+	tests: big-match: disable OOM-provoking subtest
+	* tests/big-match: Our application of this regexp '^.*x\(\)\1'
+	to a file containing a single matching line of length 2GiB+2
+	would cause inordinate memory consumption (over 100GB) via
+	regexec.c, but no leak.  That would cause disruption on most
+	systems, so remove this subtest.  Reported by Assaf Gordon.
+
+2014-11-16  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: avoid undefined behavior
+	* src/dfa.c (dfassbuild): Don't call memcpy with a second
+	argument of NULL, even when the size (3rd argument) is 0.
+
+2014-11-14  Jim Meyering  <meyering@fb.com>
+
+	gnulib: update to latest
+
+2014-11-14  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep -F -x -o PAT would print an extra newline for each match
+	* src/kwsearch.c (Fexecute): Correctly compute the length of a match
+	by subtracting 2 (not 1) when match_lines is set.  With -x, we augment
+	the "line" by both prepending and appending an EOLBYTE to the search
+	pattern.  Here, we must correct for that.  However, to compensate,
+	when we are using -x (--line-regexp) and start_ptr is NULL, we have
+	to add 1 to the length so that we still print the trailing EOLBYTE.
+	Introduced by commit v2.18-85-g2c94326.
+	* tests/match-lines: Add a new test.
+	* tests/Makefile.am (TESTS): Add it.
+	* NEWS (Bug fixes): Mention it.
+
+2014-11-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	tests: port to Darwin
+	The 'sed' command 's/.//' does not delete all bytes in the C locale.
+	Problem reported by Nelson H. F. Beebe.
+	* tests/fmbtest: Don't assume that sed treats bytes with the
+	top bit set as valid characters in the C locale, as this is not
+	true for Darwin.  Use the cs_CZ.UTF-8 locale instead, and
+	simplify the sed script.
+
+	tests: fix recently-introduced stray output
+	* tests/init.cfg (require_pcre_): Remove stray debugging output.
+
+	build: port to GCC 4.6.4 + glibc 2.5
+	On platforms this old, building with _FORTIFY_SOURCE equal to 2
+	results in duplicate definitions of standard library functions.
+	Problem reported by Nelson H. F. Beebe.
+	* configure.ac (_FORTIFY_SOURCE): Sort after GNULIB_PORTCHECK.
+	By default, do not enable this unless GNULIB_PORTCHECK is defined.
+	This better matches the original intent, which as I recall was to
+	enable these extra checks only with --enable-gcc-warnings.
+
+	tests: port to libpcre sans UTF-8 support
+	Problem reported by Nelson H. F. Beebe.
+	* tests/pcre-infloop, tests/pcre-invalid-utf8-input, tests/pcre-utf8:
+	Skip the test unless PCRE works in an en_US.UTF-8 locale.
+
+2014-11-09  Jim Meyering  <meyering@fb.com>
+
+	tests: do not fail when the zh_CN.UTF-8 locale is not installed
+	* tests/word-multibyte: This test would fail on a system with
+	no zh_CN.UTF-8 locale. Use it only if it is installed.
+
+	tests: avoid hex_printf_ portability problems
+	* tests/init.cfg (hex_printf_): Spell out a-f and A-F, for
+	non-C locales, ensure that the input to sed is newline-terminated,
+	and quote the final octal format string.
+	Suggestions from Paul Eggert.
+
+2014-11-08  Jim Meyering  <meyering@fb.com>
+
+	tests: avoid a multibyte tr portability problem
+	* tests/init.cfg (tr): New wrapper function.
+	See comments for details.  Reported by Norihiro Tanaka
+	in http://debbugs.gnu.org/18991
+
+	maint: remove spurious LC_ALL setting from one test
+	* tests/word-multibyte: Remove unnecessary setting of LC_ALL.
+
+	tests: fix typo in previous change
+	* tests/init.cfg (hex_printf_): Fix typo s/A-f/A-F/.
+	For the record, I introduced that error, not Norihiro.
+
+2014-11-08  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	tests: avoid awk+printf+\xHH portability trap
+	* tests/init.cfg (hex_printf_): Rewrite in terms of printf and sed.
+	Using awk's printf with \xHH in the format string was not portable
+	to the awk of Solaris 10, AIX 7 or HP-UX 11.23, as reported in
+	http://debbugs.gnu.org/18987.
+	* tests/word-multibyte: Use printf rather than hex_printf_,
+	and give the character we're printing a name: e_acute (rather
+	than A-grave), since that is used in other tests.
+	a trailing \n in the format string, adjust by removing it, and
+	instead invoking echo.
+	* tests/multibyte-white-space: Simply remove each trailing \n.
+	They were not needed.
+
+2014-11-07  Jim Meyering  <meyering@fb.com>
+
+	tests: avoid printf+\xHH portability trap
+	* tests/word-multibyte: Using the bourne shell's printf function
+	with strings like "\xHH\xHH" happens to work for most interactive
+	shells, but not for dash.  That is not portable.  Use our hex_printf_
+	awk wrapper instead. Without this change, this test would fail on
+	a Debian system for which /bin/sh is configured to be "dash".
+
+	maint: move helper function, hex_printf to init.cfg
+	* tests/init.cfg (hex_printf_): New function, from ...
+	* tests/multibyte-white-space: ... here.  Reflect the
+	s/hex_print/hex_printf_/ renaming.
+
+2014-11-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: port O_NOFOLLOW errno checking to NetBSD
+	Problem reported by Assaf Gordon in: http://bugs.gnu.org/18892
+	* NEWS: Document it.
+	* src/grep.c (open_symlink_nofollow_error):
+	New function, which does the right thing on NetBSD.
+	(grepfile): Use it.
+
+2014-10-31  Jim Meyering  <meyering@fb.com>
+
+	build: generate man pages even when existing targets are read-only
+	* doc/Makefile.am (grep.1): Use mv -f to move temporary to target,
+	in case the target is read-only.  Also, always make the generated
+	files read-only.
+	(egrep.1 fgrep.1): Likewise.
+	This avoids a build failure reported by Eric Blake in
+	http://lists.gnu.org/archive/html/bug-grep/2014-10/msg00112.html
+
+2014-10-30  Jim Meyering  <meyering@fb.com>
+
+	tests: avoid false-positive failure due to some zh_CN.* locales
+	On some systems, and for some zh_CN.* locales (e.g., OpenBSD5.5) the
+	E-acute pair of bytes do not qualify as a word-constituent character.
+	* tests/word-multibyte: Use zh_CN.UTF-8, rather than "zh_CN".
+	Reported by Assaf Gordon and Bruce Dubbs in
+	http://debbugs.gnu.org/18892
+
+2014-10-29  Jim Meyering  <meyering@fb.com>
+
+	gnulib: update to latest; bootstrap, too
+	* gnulib: Update to latest.
+	* bootstrap: Copy latest from gnulib.
+
+2014-10-28  Jim Meyering  <meyering@fb.com>
+
+	tests: make new test script executable
+	* tests/word-multibyte: Make this file executable.
+
+2014-10-28  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: make \w and \W work in multibyte locales
+	Reported by Jaroslav Skarvada in: http://bugs.gnu.org/18817
+	Now, \w and \W are supported in not only single byte locale but multibyte
+	locale.
+
+	* src/dfa.c (PUSH_LEX_STATE, POP_LEX_STATE): Move definitions "up",
+	so they are not within the function.
+	(lex): Make \w and \W work in a multibyte locale, the same way
+	we made \s and \S work.
+	* tests/word-multibyte: New test for this change.
+	* tests/Makefile.am: Add a rule to build new test.
+	* NEWS (Bug fixes): Mention it.
+
+2014-10-26  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: avoid false match in a non-UTF8 multibyte locale
+	This command should print nothing:
+
+	  printf '\263\244\263\244\n' \
+	    | LC_ALL=ja_JP.eucJP grep -E "$(printf '^x|\244\263')"
+
+	Before this patch, it would print its sole input line.
+	* src/dfa.c (struct dfa): Add new members: min_trcount,
+	initstate_letter, initstate_others.
+	(dfaanalyze): Build states with not only a newline context but others.
+	(build_state): Don't release initial states.
+	(skip_remains_mb): Add a parameter.
+	Add a comment describing all parameters.
+	(dfaexec_main): When there are multiple start states, we are about
+	to transition from one state to another and the current byte is not
+	the first byte of a multibyte character, first advance past the
+	current multibyte character.
+	* tests/euc-mb: Add a new test.
+	* NEWS (Bug fixes): Mention it.
+	This addresses http://debbugs.gnu.org/18685
+
+2014-10-25  Paul Eggert  <eggert@cs.ucla.edu>
+
+	tests: work around older libpcre bugs when testing -P and UTF-8
+	* tests/pcre-invalid-utf8-input: Add require_timeout_ and
+	require_compiled_in_MB_support.  Put a timeout of 3 seconds on
+	grep, to avoid having this test case loop forever with older
+	versions of libpcre, such as those found on RHEL 6.5.
+	Reported by Jim Meyering in: http://bugs.gnu.org/18806#34
+
+2014-10-24  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	tests: add test for grep -P fix
+	* tests/pcre-o: New test for this change.
+	* tests/Makefile.am (TESTS): Add it.
+
+2014-10-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: fix grep -P crash
+	Reported by Shlomi Fish in: http://bugs.gnu.org/18806
+	Commit 9fa500407137f49f6edc3c6b4ee6c7096f0190c5 (2014-09-16) is a
+	hack that I put in to speed up 'grep -P'.  Unfortunately, not only
+	is it violation of modularity, it's also a bug magnet, as we have
+	found out with Bug#18738 and Bug#18806.  Remove the optimization
+	instead of applying more bandaids.  Perhaps we can think of a
+	better way of doing the optimization, or perhaps we can just live
+	with a slower grep -P (as -P is inherently slower anyway...).
+	* src/grep.c, src/grep.h (validated_boundary):
+	Remove.  All uses removed.
+	* src/pcresearch.c (Pexecute): Do not worry about validated_boundary.
+
+2014-10-19  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: remove two erroneous clauses from a now-unused function
+	RE_DOT_NEWLINE and RE_DOT_NOT_NULL apply only to a dot that
+	matches any character.  Do not consider them when matching
+	with a bracket expression.
+
+	* src/dfa.c (match_mb_charset): Remove tests for RE_DOT_NEWLINE
+	and RE_DOT_NOT_NULL.
+
+2014-10-19  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: process all MBCSET constructs via glibc's matcher
+	The DFA matcher does not support collating symbols or equivalence
+	classes, so ensure that any MBCSET reference is handled by the glibc
+	matcher.  dfa.c already handled this in one case, but not the other,
+	so that a command like "printf '\0' |src/grep -aE '^\s?$'" would
+	mistakenly end up using dfa.c's match_mb_charset function rather
+	than glibc's matcher.
+
+	* src/dfa.c (dfaexec_main): Move that code into the
+	State_transition macro.  This renders the match_mb_charset
+	unused by grep.
+	* tests/multibyte-white-space: Add a test to exercise the
+	just-rendered-inaccessible code path.
+
+2014-10-15  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep: initialize validation_boundary properly before use
+	* src/grep.c (main): Initialize validation_boundary before pre-searching
+	for an empty line.
+
+2014-10-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: fix off-by-one bug in -P optimization
+	Reported by Norihiro Tanaka in: http://bugs.gnu.org/18738
+	* src/pcresearch.c (Pexecute): Fix off-by-one bug with
+	validation_boundary.
+	* tests/init.cfg (envvar_check_fail): Catch off-by-one bug.
+
+2014-10-08  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: fix a theoretical bug
+	* src/dfa.c (dfaexec_main): After searching for a match from
+	the initial state, set the previous state, S1, to 0.
+	So far, we have found no case in which this fix makes a difference.
+	See http://debbugs.gnu.org/18645
+
+2014-10-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	doc: modernize and simplify man page
+	* doc/grep.in.1 (Tx, Id): Remove.  All uses removed.
+	(MTO, URL): New macros, used for email and URL.
+	Use them when appropriate.
+	In main text, omit chatty discussions of other implementations;
+	the full manual suffices for this sort of thing.
+
+	doc: clarify exit status
+	Reported by Santiago Ruano Rincón in: http://bugs.gnu.org/18651
+	* doc/grep.in.1 (EXIT STATUS):
+	* doc/grep.texi (Exit Status): Clarify.
+
+2014-10-07  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: test for just-fixed bug
+	* tests/mb-dot-newline: New file.
+	* tests/Makefile.am (TESTS): Add it.
+	* NEWS (Bug fixes): Mention it.
+	Bisection suggests that the bug was introduced by
+	commit v2.18-123-geb3292b.  Also see
+	http://debbugs.gnu.org/cgi/bugreport.cgi?msg=17;bug=18580
+
+2014-10-05  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: factor out a new nontrivial block of duplicated code
+	* src/dfa.c (State_transition): New macro.
+	(dfaexec_main): Use it twice.
+
+	dfa: check end of input buffer after transition in non-UTF8 multibyte locale
+	* src/dfa.c (dfaexec_main): Check for end of input buffer after each
+	transition in a non-UTF8 multibyte locale.
+	* tests/mb-non-UTF8-overrun: New test.
+	* tests/Makefile.am (TESTS): Add it.
+	* src/grep.c (main): With this fix, we no longer need the fourth
+	byte of "eolbytes".
+
+2014-10-04  Jim Meyering  <meyering@fb.com>
+
+	grep: avoid stack buffer read-underrun and overrun
+	Testing binaries built with -fsanitize=address caused aborts due
+	to stack underrun and overrun.
+	* src/grep.c (main): Allocate a larger buffer for eolbytes:
+	one byte before the beginning and one more after the end.
+	For details, see http://debbugs.gnu.org/18580#44.
+
+2014-10-04  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	grep: fix subscript error when testing whether empty lines match
+	src/grep.c (grep): When testing whether an empty line matches,
+	make the input buffer one byte longer, as dfaexec uses that
+	for a sentinel.
+
+2014-09-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	dfa: minor tweaks, mostly to remove __attribute__ ((noinline))
+	That attribute isn't portable, and I found a way to get similar
+	performance with standard C features.
+	* NEWS: Document the recently-installed performance improvement.
+	* src/dfa.c (struct dfa): New member dfaexec.
+	(dfaexec_main): Remove unnecessary 'const'.
+	(dfaexec_mb, dfaexec_sb): Remove __attribute__ ((noinline));
+	no longer needed.
+	(dfaexec): Use new dfaexec member.
+	(dfainit, dfaoptimize, dfassbuild): Initialize it.
+
+2014-09-27  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: separate dfaexec function to help optimization by compiler
+	* src/dfa.c (dfaexec_main): Rename from dfaexec, add inline attribute.
+	(dfaexec_mb): New function.  Run it when d->multibyte is true.   For this
+	function inlination must be avoided.
+	(dfaexec_sb): New function.  Run it when d->multibyte is false.  For this
+	function inlination must be avoided.
+	(dfaexec): Call dfaexec_mb or dfaexec_sb accoding to d->multibyte.
+
+2014-09-27  Norihiro Tanaka  <noritnk@kcn.ne.jp>
+
+	dfa: speed-up at initial state
+	DFA state is always 0 until have found potential match.  So we improve
+	matching there by continuing to use the transition table.
+
+	* src/dfa.c (skip_remains_mb): New function.
+	(dfaexec): Speed-up at initial state.
+
+2014-09-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	maint: generalize the -Wcast-align fix
+	* src/grep.c (CAST_ALIGNED): New macro.
+	(skip_easy_bytes): Use it.
+
+2014-09-27  Jim Meyering  <meyering@fb.com>
+
+	maint: suppress a false-positive -Wcast-align warning
+	Building with --enable-gcc-warnings and gcc-4.9.1 would provoke this:
+	  grep.c:499:12: error: cast from 'const char *' to 'const uword *'\
+	      (aka 'const unsigned long *') increases required alignment from\
+	      1 to 8 [-Werror,-Wcast-align]
+	    for (s = (uword const *) p; ! (*s & hibyte_mask); s++)
+		     ^~~~~~~~~~~~~~~~~
+	* src/grep.c (skip_easy_bytes): Use a pragma to suppress
+	gcc's false-positive cast-alignment warning.
+
+2014-09-26  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: don't check extensively for invalid prefix bytes unless -P
+	Problem reported by Jim Meyering in: http://bugs.gnu.org/18454#56
+	* src/grep.c (grep): After the first buffer is checked, leave the
+	file-type checker in TEXTBIN_UNKNOWN state only when -P is used.
+	Only the -P matcher has performance problems with checking binary
+	data that make it worthwhile to check every prefix input byte so
+	the -P matcher's TEXTBIN_UNKNOWN optimizations can come into play.
+	Other matchers can simply check the data directly, and using
+	TEXTBIN_UNKNOWN with them slows 'grep' down for no benefit.
+
+	grep: scan for valid multibyte strings more quickly
+	Scan valid multibyte strings more quickly in the common case of
+	encodings that are upward compatible with ASCII, such as UTF-8.
+	You'd think there'd be a fast standard way to do this nowadays,
+	but nooooo....
+	Problem reported by Jim Meyering in: http://bugs.gnu.org/18454#56
+	* src/grep.c (HIBYTE): New constant.
+	(easy_encoding): New static var.
+	(init_easy_encoding, skip_easy_bytes): New functions.
+	(uword): New type.
+	(buffer_textbin): Skip easy bytes quickly.
+	Don't bother with mb_clen here, since skip_easy_bytes typically
+	captures the easy cases; just use mbrlen directly.
+	(buffer_textbin, file_textbin): First arg is no longer a const
+	pointer, since the byte past the end is now an overwritten sentinel.
+	(fillbuf): Make room for a uword after the buffer, for skip_easy_bytes.
+	(main): Call init_easy_encoding.
+
+2014-09-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: speed up processing of holes before EOF on Solaris
+	* src/grep.c (fillbuf): If SEEK_DATA fails with errno == ENXIO,
+	skip over the hole at EOF.
+
+	grep: port to platforms lacking SEEK_DATA
+	Reported by Norihiro Tanaka in: http://bugs.gnu.org/18454#38
+	* src/grep.c (SEEK_DATA): Default to SEEK_SET if not defined.
+	(SEEK_HOLE): Move to top level, and default it to SEEK_SET.
+	(file_textbin): Adjust to new default.
+	(fillbuf): Don't bother with SEEK_DATA if it defaults to SEEK_SET.
+
+	grep: skip past holes efficiently
+	Take advantage of the relaxed rules for treating non-text bytes in
+	binary data, by efficiently skipping past holes on platforms
+	supporting lseek's SEEK_DATA flag.
+	On one test on a circa-2008 Sun Fire V40z running Solaris 11.2,
+	'grep x' took 0.009 real-time seconds to scan a holey file of size
+	9,223,372,036,854,775,802 bytes, for a nominal scan rate of 1 ZB/s.
+	grep 2.20's scan rate on this platform was 843 MB/s, so this is a
+	speedup by a factor of 1.2 trillion.  The speedup factor is not
+	as great on GNU/Linux hosts, due to what appear to be SEEK_DATA
+	inefficiencies, but presumably this will be cleared up in time.
+	* NEWS: Document this.
+	* src/grep.c, src/grep.h (eolbyte): Now char, not unsigned char.
+	This is for compatibility with the rest of the code.
+	The old (performance?) reasons for 'unsigned char' are now moot.
+	* src/grep.c (skip_nuls, skip_empty_lines, seek_data_failed):
+	New static vars.
+	(totalnl): Move up, since it's about input, not output, and
+	fillbuf now uses it.
+	(add_count): Move up, since fillbuf now uses it.
+	(all_zeros): New function.
+	(fillbuf): Use SEEK_DATA to skip past holes efficiently,
+	on systems that support this.
+	(grep, main): Set the new static vars.
+
+	grep: improve -P performance in typical cases
+	* src/grep.c, src/grep.h (enum textbin): Move to grep.h.
+	(input_textbin, validated_boundary): New vars.
+	* src/grep.c (grepbuf, grep): Initialize them.
+	* src/pcresearch.c (Pexecute): Do a multiline search
+	when the input is known to be free of encoding errors.
+	Quickly discard bytes that are obviously encoding errors.
+	Quickly match empty strings.
+
+	grep: minor -P speedup with jit_stack
+	* src/pcresearch.c (jit_stack): No longer static.
+
+	grep: non-text bytes in binary data may be treated as line ends
+	* NEWS, doc/grep.texi (File and Directory Selection):
+	Document this change.
+	* src/grep.c (zap_nuls): New function.
+	(grep): Use it.
+	* tests/null-byte: Relax to allow new behavior.
+
+	grep: -z no longer considers '\200' to be binary data
+	This avoids a problem when using grep -z in a Windows-1252 locale.
+	Plus, it lets 'grep -z' run a bit faster.
+	* NEWS: Document this.
+	* src/grep.c (buffer_textbin): Don't look for '\200' if -z.
+	* tests/pcre-z: Test for new behavior.
+
+	grep: refactor binary-vs-unknown-vs-text flags for clarity
+	* src/grep.c (enum textbin): New enum.
+	(textbin_is_binary): New function.
+	(buffer_textbin, file_textbin, grep): Use them, for clarity.
+
+2014-09-16  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: fix -P speedup bug with empty match
+	* src/pcresearch.c (NSUB): New top-level constant, replacing
+	'nsub' within Pexecute.
+	(Pcompile, Pexecute): Use it.
+	(Pexecute): Don't assume sub[1] is zero after a PCRE_ERROR_BADUTF8
+	match failure.
+	* tests/pcre-invalid-utf8-input: Test for this bug.
+
+	grep: port -P speedup to hosts lacking PCRE_STUDY_JIT_COMPILE
+	* src/pcresearch.c (Pcompile): Do not assume that
+	PCRE_STUDY_JIT_COMPILE is defined.
+	(empty_match): Define on all platforms.
+
+	grep: use mbclen cache in one more place
+	* src/grep.c (fgrep_to_grep_pattern): Use mb_clen here, too.
+
+	grep: avoid false alarms for mb_clen and to_uchar
+	* cfg.mk (_gl_TS_unmarked_extern_functions): New var,
+	to bypass the tight_scope false alarms on mb_clen and to_uchar.
+
+	grep: use mbclen cache more effectively
+	* src/grep.c (buffer_textbin, contains_encoding_error):
+	Use mb_clen for speed.
+	(buffer_textbin): Bypass mb_clen in unibyte locales.
+	(main): Always initialize the cache, since it's sometimes used in
+	unibyte locales now.  Initialize it before contains_encoding_error
+	might be called.
+	* src/search.h (SEARCH_INLINE): New macro.
+	(mbclen_cache): Now extern decl.
+	(mb_clen): New inline function.
+	* src/searchutils.c (SEARCH_INLINE, SYSTEM_INLINE): Define.
+	(mbclen_cache): Now extern.
+	(build_mbclen_cache): Put 1 into the cache when mbrlen returns 0.
+	(mb_goback): Use mb_len for speed, and rely on it returning nonzero.
+	* src/system.h (SYSTEM_INLINE): New macro.
+	(to_uchar): Use it.
+
+	grep: improve performance for older glibc
+	glibc has a bug where mbrlen and mbrtowc mishandle length-0 inputs.
+	Working around it in gnulib slows grep down, so disable the tests for it
+	and make sure grep works even if the bug is present.
+	* bootstrap.conf (avoided_gnulib_modules): Add mbrtowc-tests.
+	* configure.ac (gl_cv_func_mbrtowc_empty_input): Assume yes.
+	* src/searchutils.c (mb_next_wc): Don't invoke mbrtowc on empty input.
+
+	grep: treat a file as binary if its prefix contains encoding errors
+	* NEWS:
+	* doc/grep.texi (File and Directory Selection):
+	Document this.
+	* src/grep.c (buffer_encoding, buffer_textbin): New functions.
+	(file_textbin): Rename from file_is_binary.  Now returns 3-way value.
+	All callers changed.
+	(file_textbin, grep): Check the input more carefully for text vs
+	binary data.
+	(contains_encoding_error): Remove; use replaced by buffer_encoding.
+	* tests/backref-multibyte-slow:
+	* tests/high-bit-range:
+	* tests/invalid-multibyte-infloop:
+	Use -a, since the input is now considered to be binary.
+	* tests/invalid-multibyte-infloop: Add a check for new behavior.
+
+	grep: use bool for boolean in grep.c
+	* src/grep.c (show_version, suppress_errors, only_matching)
+	(align_tabs, match_icase, match_words, match_lines, errseen)
+	(write_error_seen, is_device_mode, usable_st_size)
+	(file_is_binary, skipped_file, reset, fillbuf, out_quiet)
+	(out_line, out_byte, count_matches, no_filenames, line_buffered)
+	(done_on_match, exit_on_match, print_line_head, prline, grep)
+	(grepdirent, grepfile, grepdesc, grep_command_line_arg)
+	(get_nondigit_option, main): Use bool for boolean.
+	(print_line_head, prline): Use char for byte.
+	* src/grep.h: Include <stdbool.h>, and adjust decls to match
+	changes in grep.c.
+
+	grep: speed up -P on files containing many multibyte errors
+	* src/pcresearch.c (empty_match): New var.
+	(Pcompile): Set it.
+	(Pexecute): Use it.
+
+	grep: remove/refactor unnecessary code about line splitting
+	* src/grep.c (do_execute): Remove.  Caller now uses 'execute'.
+	* src/pcresearch.c (Pexecute): Improve comment about this.
+
+2014-09-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: diagnose -P in non-UTF-8 multibyte locale
+	* src/pcresearch.c (Pcompile):
+	libpcre supports only unibyte and UTF-8 locales,
+	so report an error and exit if used in other locales.
+	* NEWS: Mention this.
+	* tests/euc-mb: Test this.
+
+2014-09-12  Jim Meyering  <meyering@fb.com>
+
+	doc: move NEWS note about GREP_OPTIONS into proper section
+	* NEWS (Changes in behavior): Move the note about GREP_OPTIONS
+	from the 2.20 section into the section for the upcoming release.
+
+2014-09-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: make GREP_OPTIONS obsolescent
+	* NEWS:
+	* doc/grep.in.1 (ENVIRONMENT_VARIABLES):
+	* doc/grep.texi (Environment Variables):
+	Document that GREP_OPTIONS is obsolescent now.
+	* src/grep.c (main): Warn if GREP_OPTIONS is used.
+	* tests/r-dot, tests/skip-device: Don't use GREP_OPTIONS.
+
+2014-09-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	doc: bug tracker has moved to debbugs.gnu.org
+	* README (KNOWN BUGS):
+	* doc/grep.in.1:
+	* doc/grep.texi (Reporting Bugs): Document this.
+
+	grep: fix false matches with -P '...$' and invalid UTF-8
+	* tests/pcre-invalid-utf8-input: Add a test for that.
+
+	grep: fix false matches with -P '...$' and invalid UTF-8
+	* src/pcresearch.c (Pexecute): Use PCRE_NOTEOL when matching
+	initial substrings of a line.
+
+2014-09-10  Jim Meyering  <meyering@fb.com>
+
+	tests: add expect-to-fail test for a glibc regexp bug
+	* tests/triple-backref: New file.
+	* tests/Makefile.am (TESTS): Add it.
+	(XFAIL_TESTS): List it as a known, always-failing test.
+	Based on the bug report from Paul Eggert:
+	https://sourceware.org/bugzilla/show_bug.cgi?id=17356
+
+	maint: avoid distcheck failure
+	* Makefile.am (EXTRA_DIST): Add .mailmap.
+
+2014-09-10  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: port recent fix to older pcre version
+	* src/pcresearch.c (Pexecute): Don't assume that a pcre_exec
+	that returns PCRE_ERROR_NOMATCH leaves its sub argument alone.
+	This assumption is false for libpcre-3 version 8.31-2ubuntu2.
+
+2014-09-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: -P now treats invalid UTF-8 input as non-matching
+	Problem reported by Santiago Vila in: http://bugs.gnu.org/18266
+	* NEWS: Mention this.
+	* src/pcresearch.c (Pexecute): Treat UTF-8 encoding errors
+	as non-matching data, instead of exiting 'grep'.
+	* tests/pcre-infloop: grep now exits with status 1, not 2.
+	* tests/pcre-invalid-utf8-input: grep now exits with status 0, not 2.
+
+2014-08-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: fix integer-width bugs in undossify_input etc.
+	undossify_input bug reported by Vincent Lefevre in:
+	http://bugs.gnu.org/18269
+	* src/dosbuf.c (undossify_input): Return size_t, not int.
+	* src/grep.c (fillbuf): Work portably even if safe_read returns a
+	value greater than SSIZE_MAX, e.g., if there's an I/O error.
+
+2014-08-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	doc: document LANGUAGE
+	Reported by Benno Schulenberg in: http://bugs.gnu.org/18185
+	* doc/grep.texi (Environment Variables): Document LANGUAGE.
+
+	doc: prefer @env to @code
+	Reported by Benno Schulenberg in: http://bugs.gnu.org/18184
+	* doc/grep.texi: Avoid @code in favor of @env, or of nothing at all.
+
+2014-07-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	doc: Document -r vs --exclude more carefully.
+	Problem reported by Hugues Andreux in: http://bugs.gnu.org/17763
+	* doc/grep.texi (File and Directory Selection): Be more careful
+	about documenting the interaction between recursive searching,
+	--include, --exclude, and --exclude-dir.
+
+2014-06-27  Jim Meyering  <meyering@fb.com>
+
+	maint: split long lines, and enforce the 80-column limit
+	* cfg.mk (sc_long_lines): New rule, from coreutils; exempt tests/*
+	* src/grep.c (usage): Tweak -F wording to shorten a line.
+	Correct grammar in a comment.
+	Split the --exclude-file=... description to fit within 80 columns.
+	Use emit_bug_reporting_address, eliminating another long line.
+	* src/dfa.c: Split long lines.  No semantic change.
+	* doc/grep.texi: Likewise.
+	* tests/include-exclude: Split a long line.
+	* tests/backref: Split long lines.
+	* tests/empty: Likewise.
+	* tests/fmbtest: Likewise.
+
+	doc: update HACKING
+	* HACKING: Update from coreutils.
+
+	maint: generate distributed THANKS from VC'd THANKS.in
+	* Makefile.am (THANKS): New rule.
+	* THANKS.in: New file.
+	* THANKS: Remove.  Now it's generated from the combination of
+	THANKS.in and git logs.
+	* .mailmap: New file.
+	* cfg.mk (sc_THANKS_in_duplicates): New syntax-check rule, from
+	coreutils.
+	* .gitignore: Add THANKS.
+	* thanks-gen: New file, from coreutils.
+
+2014-06-27  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: with -E, unmatched ')' matches itself
+	Problem reported by Nathan Weeks in: http://bugs.gnu.org/17856
+	* src/grep.c (Ecompile): Also specify RE_UNMATCHED_RIGHT_PAREN_ORD.
+	* doc/grep.texi (Fundamental Structure), NEWS: Document this.
+	* tests/ere.tests: Add a couple of tests for this.
+	* tests/spencer1.tests: Fix exit status.
+
+2014-06-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	build: avoid -Wstack-protector
+	This allows the use of --enable-gcc-warnings on Gentoo and Ubuntu.
+	See: http://bugs.gnu.org/17793
+	* configure.ac (WERROR_CFLAGS): Avoid -Wstack-protector.
+
+	This can be worked around, but the cure is worse than the disease.
+
+2014-06-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	build: don't make output files read-only
+	This led to problems, such as the prompt "mv: try to overwrite
+	'egrep', overriding mode 0555 (r-xr-xr-x)? " during a build.
+	It can be worked around, but the cure is worse than the disease;
+	making output files read-only is more trouble than it's worth.
+	* doc/Makefile.am (grep.1, egrep.1, fgrep.1):
+	* lib/Makefile.am (colorize.c):
+	* src/Makefile.am (egrep fgrep):
+	Don't make output files read-only.  Prefer separate commands to
+	'&&' when either will do.
+
+2014-06-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	maint: remove grep.spec
+	* grep.spec: Remove; obsolete and evidently not used.
+
+2014-06-07  Paul Eggert  <eggert@cs.ucla.edu>
+
+	doc: use gnulib fdl module
+	* bootstrap.conf (gnulib_modules): Add fdl.
+	* doc/fdl.texi: Remove, as this now comes from gnulib.
+	* doc/.gitignore: Update to match current sources.
+
+2014-06-06  Jim Meyering  <meyering@fb.com>
+
+	build: improve rule to generate egrep+fgrep scripts
+	* src/Makefile.am (egrep fgrep): chmod a=rx generated files,
+	and remove $@-t before attempting to redirect to it, in case it
+	is read-only.
+
+	build: don't redirect directly to $@
+	* lib/Makefile.am (colorize.c): Don't redirect directly to target, $@.
+	Otherwise, we could create a corrupt colorize.c file with a
+	timestamp that indicates it is up to date.
+	Also, make the generated file read-only.
+
+2014-06-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	grep: undo part of previous change
+	* src/dfa.c (enlist): Undo part of previous change that doesn't
+	look correct and doesn't help performance much anyway.
+
+	grep: use system strstr if available and fast
+	Problem reported by Norihiro Tanaka in: http://bugs.gnu.org/17700
+	* NEWS: Document this.
+	* bootstrap.conf (gnulib_modules): Add strstr.
+	* src/dfa.c (istrstr): Remove.
+	(enlist): Use strstr instead.  Wait until we need memory before
+	allocating it; this can save an unnecessary allocate and free.
+
+	build: update gnulib submodule to latest
+
 2014-06-03  Jim Meyering  <meyering@fb.com>
+
+	maint: post-release administrivia
+	* NEWS: Add header line for next release.
+	* .prev-version: Record previous version.
+	* cfg.mk (old_NEWS_hash): Auto-update.
 
 	version 2.20
 	* NEWS: Record release date.

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Test NUL bytes in patterns and data.
 
-# Copyright 2014 Free Software Foundation, Inc.
+# Copyright 2014-2016 Free Software Foundation, Inc.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,8 +38,10 @@ for left in '' a '#' '\0'; do
           pat="$hat$force_regex$data$dollar"
           printf "$pat\\n" >pat || framework_failure_
           for locale in $locales; do
-            LC_ALL=$locale grep -f pat in ||
-              fail_ "'$pat' does not match '$data'"
+            LC_ALL=$locale grep -f pat in
+            status=$?
+            test $status -eq 0 || test $status -eq 1 ||
+              fail_ "'$pat' caused an error"
             LC_ALL=$locale grep -a -f pat in | cmp -s - in ||
               fail_ "-a '$pat' does not match '$data'"
           done
@@ -48,5 +50,19 @@ for left in '' a '#' '\0'; do
     done
   done
 done
+
+(echo xxx && yes yyy | sed 100000q && printf 'z\n\0') >in || framework_failure_
+echo xxx >exp || framework_failure_
+grep xxx in >out || fail=1
+compare exp out || fail=1
+
+printf '%s\n' xxx 'Binary file in matches' > exp || framework_failure_
+grep -E 'xxx|z' in >out || fail=1
+compare exp out || fail=1
+
+printf '%s\0' 'abcadc' >in || framework_failure_
+printf '%s\0' 'abc' 'adc' >exp || framework_failure_
+grep -oz 'a[^c]*c' in >out || fail=1
+compare exp out || fail=1
 
 Exit $fail

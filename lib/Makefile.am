@@ -1,4 +1,4 @@
-# Copyright 1997-1998, 2005-2014 Free Software Foundation, Inc.
+# Copyright 1997-1998, 2005-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,8 @@ libgreputils_a_SOURCES += colorize.h
 EXTRA_DIST += colorize-posix.c colorize-w32.c
 CLEANFILES += colorize.c
 colorize.c:
-	$(AM_V_GEN)echo '#include <$(COLORIZE_SOURCE)>' >$@
+	$(AM_V_at)echo '#include <$(COLORIZE_SOURCE)>' >$@-t
+	$(AM_V_at)mv $@-t $@
 
 libgreputils_a_LIBADD += $(LIBOBJS) $(ALLOCA)
 libgreputils_a_DEPENDENCIES += $(LIBOBJS) $(ALLOCA)

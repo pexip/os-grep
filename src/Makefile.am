@@ -1,5 +1,5 @@
 ## Process this file with automake to create Makefile.in
-# Copyright 1997-1998, 2005-2014 Free Software Foundation, Inc.
+# Copyright 1997-1998, 2005-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,18 +16,23 @@
 
 LN = ln
 
-AM_CFLAGS = $(WARN_CFLAGS) $(WERROR_CFLAGS)
+AM_CFLAGS = $(WARN_CFLAGS) $(WERROR_CFLAGS) $(PCRE_CFLAGS)
 
 # Tell the linker to omit references to unused shared libraries.
 AM_LDFLAGS = $(IGNORE_UNUSED_LIBRARIES_CFLAGS)
 
 bin_PROGRAMS = grep
 bin_SCRIPTS = egrep fgrep
-grep_SOURCES = grep.c searchutils.c \
-          dfa.c dfasearch.c \
-          kwset.c kwsearch.c \
-          pcresearch.c
-noinst_HEADERS = grep.h dfa.h kwset.h search.h system.h
+grep_SOURCES =					\
+  dfasearch.c					\
+  die.h						\
+  grep.c					\
+  kwsearch.c					\
+  kwset.c					\
+  pcresearch.c					\
+  searchutils.c
+
+noinst_HEADERS = grep.h kwset.h search.h system.h
 
 # Sometimes, the expansion of $(LIBINTL) includes -lc which may
 # include modules defining variables like 'optind', so libgreputils.a
@@ -38,24 +43,24 @@ LDADD = \
   ../lib/libgreputils.a $(LIBINTL) ../lib/libgreputils.a $(LIBICONV) \
   $(LIBTHREAD)
 
-grep_LDADD = $(LDADD) $(LIB_PCRE)
+grep_LDADD = $(LDADD) $(PCRE_LIBS)
 localedir = $(datadir)/locale
 AM_CPPFLAGS = -I$(top_builddir)/lib -I$(top_srcdir)/lib
 
 EXTRA_DIST = dosbuf.c egrep.sh
 
 egrep fgrep: egrep.sh Makefile
-	$(AM_V_GEN)grep=`echo grep | sed -e '$(transform)'`	&& \
-	case $@ in egrep) option=-E;; fgrep) option=-F;; esac	&& \
+	$(AM_V_GEN)grep=`echo grep | sed -e '$(transform)'` &&		\
+	case $@ in egrep) option=-E;; fgrep) option=-F;; esac &&	\
 	shell_does_substrings='set x/y && d=$${1%/*} && test "$$d" = x' && \
-	if $(SHELL) -c "$$shell_does_substrings" 2>/dev/null; then \
-	  edit_substring='s,X,X,'; \
-	else \
+	if $(SHELL) -c "$$shell_does_substrings" 2>/dev/null; then	\
+	  edit_substring='s,X,X,';					\
+	else								\
 	  edit_substring='s,\$${0%/\*},`expr "X$$0" : '\''X\\(.*\\)/'\''`,g'; \
-	fi && \
-	sed -e 's|[@]SHELL@|$(SHELL)|g' \
-	    -e "$$edit_substring" \
-	    -e "s|[@]grep@|$$grep|g" \
+	fi &&								\
+	sed -e 's|[@]SHELL@|$(SHELL)|g'					\
+	    -e "$$edit_substring"					\
+	    -e "s|[@]grep@|$$grep|g"					\
 	    -e "s|[@]option@|$$option|g" <$(srcdir)/egrep.sh >$@-t
 	$(AM_V_at)chmod +x $@-t
 	$(AM_V_at)mv $@-t $@

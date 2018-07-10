@@ -1,6 +1,6 @@
 ## DO NOT EDIT! GENERATED AUTOMATICALLY!
 ## Process this file with automake to produce Makefile.in.
-# Copyright (C) 2002-2014 Free Software Foundation, Inc.
+# Copyright (C) 2002-2016 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,6 +58,15 @@ AM_LIBTOOLFLAGS = --preserve-dup-deps
 
 TESTS_ENVIRONMENT += EXEEXT='@EXEEXT@' srcdir='$(srcdir)'
 
+## begin gnulib module alignof-tests
+
+TESTS += test-alignof
+check_PROGRAMS += test-alignof
+
+EXTRA_DIST += test-alignof.c
+
+## end   gnulib module alignof-tests
+
 ## begin gnulib module alloca-opt-tests
 
 TESTS += test-alloca-opt
@@ -108,7 +117,6 @@ EXTRA_DIST += test-btowc1.sh test-btowc2.sh test-btowc.c signature.h macros.h
 
 TESTS += test-c-ctype
 check_PROGRAMS += test-c-ctype
-
 EXTRA_DIST += test-c-ctype.c macros.h
 
 ## end   gnulib module c-ctype-tests
@@ -153,6 +161,18 @@ check_PROGRAMS += test-ctype
 EXTRA_DIST += test-ctype.c
 
 ## end   gnulib module ctype-tests
+
+## begin gnulib module dfa-tests
+
+TESTS +=			\
+  dfa-invalid-char-class.sh	\
+  dfa-match.sh
+
+check_PROGRAMS += dfa-match-aux
+dfa_match_aux_LDADD = $(LDADD) @LIBINTL@
+EXTRA_DIST += dfa-match.sh dfa-match-aux.c dfa-invalid-char-class.sh
+
+## end   gnulib module dfa-tests
 
 ## begin gnulib module dirent-safer-tests
 
@@ -220,7 +240,7 @@ TESTS += \
  test-exclude8.sh
 
 check_PROGRAMS += test-exclude
-test_exclude_LDADD = $(LDADD) @LIBINTL@
+test_exclude_LDADD = $(LDADD) @LIBINTL@ $(LIBTHREAD)
 EXTRA_DIST += test-exclude.c test-exclude1.sh test-exclude2.sh test-exclude3.sh test-exclude4.sh test-exclude5.sh test-exclude6.sh test-exclude7.sh test-exclude8.sh
 
 ## end   gnulib module exclude-tests
@@ -428,6 +448,16 @@ EXTRA_DIST += macros.h signature.h test-getopt.c test-getopt.h test-getopt_long.
 
 ## end   gnulib module getopt-posix-tests
 
+## begin gnulib module getprogname-tests
+
+DEFS += -DEXEEXT=\"@EXEEXT@\"
+TESTS += test-getprogname
+check_PROGRAMS += test-getprogname
+test_getprogname_LDADD = $(LDADD)
+EXTRA_DIST += test-getprogname.c
+
+## end   gnulib module getprogname-tests
+
 ## begin gnulib module gettimeofday-tests
 
 TESTS += test-gettimeofday
@@ -556,6 +586,14 @@ EXTRA_DIST += test-langinfo.c
 
 ## end   gnulib module langinfo-tests
 
+## begin gnulib module limits-h-tests
+
+TESTS += test-limits-h
+check_PROGRAMS += test-limits-h
+EXTRA_DIST += test-limits-h.c
+
+## end   gnulib module limits-h-tests
+
 ## begin gnulib module locale-tests
 
 TESTS += test-locale
@@ -622,23 +660,6 @@ check_PROGRAMS += test-malloca
 EXTRA_DIST += test-malloca.c
 
 ## end   gnulib module malloca-tests
-
-## begin gnulib module mbrtowc-tests
-
-TESTS += \
-  test-mbrtowc1.sh test-mbrtowc2.sh test-mbrtowc3.sh test-mbrtowc4.sh \
-  test-mbrtowc-w32-1.sh test-mbrtowc-w32-2.sh test-mbrtowc-w32-3.sh \
-  test-mbrtowc-w32-4.sh test-mbrtowc-w32-5.sh
-TESTS_ENVIRONMENT += \
-  LOCALE_FR='@LOCALE_FR@' \
-  LOCALE_FR_UTF8='@LOCALE_FR_UTF8@' \
-  LOCALE_JA='@LOCALE_JA@' \
-  LOCALE_ZH_CN='@LOCALE_ZH_CN@'
-check_PROGRAMS += test-mbrtowc test-mbrtowc-w32
-
-EXTRA_DIST += test-mbrtowc1.sh test-mbrtowc2.sh test-mbrtowc3.sh test-mbrtowc4.sh test-mbrtowc.c test-mbrtowc-w32-1.sh test-mbrtowc-w32-2.sh test-mbrtowc-w32-3.sh test-mbrtowc-w32-4.sh test-mbrtowc-w32-5.sh test-mbrtowc-w32.c signature.h macros.h
-
-## end   gnulib module mbrtowc-tests
 
 ## begin gnulib module mbscasecmp-tests
 
@@ -989,6 +1010,14 @@ EXTRA_DIST += test-stat.h test-stat.c signature.h macros.h
 
 ## end   gnulib module stat-tests
 
+## begin gnulib module stdalign-tests
+
+TESTS += test-stdalign
+check_PROGRAMS += test-stdalign
+EXTRA_DIST += test-stdalign.c macros.h
+
+## end   gnulib module stdalign-tests
+
 ## begin gnulib module stdbool-tests
 
 TESTS += test-stdbool
@@ -1062,6 +1091,14 @@ check_PROGRAMS += test-strnlen
 EXTRA_DIST += test-strnlen.c zerosize-ptr.h signature.h macros.h
 
 ## end   gnulib module strnlen-tests
+
+## begin gnulib module strstr-tests
+
+TESTS += test-strstr
+check_PROGRAMS += test-strstr
+EXTRA_DIST += test-strstr.c zerosize-ptr.h signature.h macros.h
+
+## end   gnulib module strstr-tests
 
 ## begin gnulib module strtoimax-tests
 
@@ -1217,14 +1254,6 @@ EXTRA_DIST += test-unsetenv.c signature.h macros.h
 
 ## end   gnulib module unsetenv-tests
 
-## begin gnulib module update-copyright-tests
-
-TESTS += test-update-copyright.sh
-TESTS_ENVIRONMENT += abs_aux_dir='$(abs_aux_dir)'
-EXTRA_DIST += test-update-copyright.sh
-
-## end   gnulib module update-copyright-tests
-
 ## begin gnulib module vasnprintf
 
 
@@ -1257,6 +1286,11 @@ EXTRA_DIST += test-vc-list-files-git.sh test-vc-list-files-cvs.sh
 TESTS_ENVIRONMENT += MAKE='$(MAKE)'
 TESTS += test-verify test-verify.sh
 check_PROGRAMS += test-verify
+
+# This test expects compilation of test-verify.c to fail, and
+# each time it fails, the makefile rule does not perform the usual
+#  "mv -f $name.Tpo $name.po, so tell make clean to remove that file.
+MOSTLYCLEANFILES += .deps/test-verify.Tpo
 EXTRA_DIST += test-verify.c test-verify.sh
 
 ## end   gnulib module verify-tests
@@ -1307,7 +1341,6 @@ EXTRA_DIST += test-wctype-h.c macros.h
 
 TESTS += test-wcwidth
 check_PROGRAMS += test-wcwidth
-
 EXTRA_DIST += test-wcwidth.c signature.h macros.h
 
 ## end   gnulib module wcwidth-tests

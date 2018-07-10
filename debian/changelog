@@ -1,8 +1,128 @@
-grep (2.20-4.1pexip1) pexip; urgency=low
+grep (2.27-2) unstable; urgency=low
 
-  * Migrate to Jessie
+  * Upstream patches to solve issues when standard input is a file in Linux
+    /proc file system and standard output is /dev/null:
+    - upstream-grep-simplify-finalize_input.patch
+    - upstream-grep-work-around-proc-lseek-glitch.patch
+    - upstream-grep-fix-bug-dev-null-output.patch
+  * Minor upstream patch to clarify in NEWS the new early-exit 
+    options.
+    upstream-clarify-early-exit-news-for-2.27.patch
+  * When grep -Fo finds matches of differing length, it could
+    mistakenly print a shorter one. Import the patch to fix it:
+    upstream-grep-Fo-could-report-a-match-that-is-not-the-longest.patch
 
- -- John-Mark Bell <jmb@pexip.com>  Wed, 22 Feb 2017 19:28:54 +0000
+ -- Santiago Ruano Rincón <santiago@debian.org>  Mon, 23 Jan 2017 19:18:59 +0100
+
+grep (2.27-1) unstable; urgency=low
+
+  * New upstream release.
+  * Improve documentation on context and matching lines. (Closes: #831673).
+  * Fix non-deterministic behavior when output redirected to /dev/null
+    (Closes: #844286).
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Wed, 07 Dec 2016 17:31:23 +0100
+
+grep (2.26-1) unstable; urgency=low
+
+  * New upstraem release.
+  * Fix diagnosing errors in regexps provided through -f (Closes: #525214).
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Mon, 03 Oct 2016 06:44:16 +0200
+
+grep (2.25-6) unstable; urgency=medium
+
+  * debian/tests:
+    - Remove no-pcre3 test: not possible to run it on available testbeds(?).
+    - Add @builddeps@ to fix test dependencies.
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Sun, 03 Jul 2016 21:07:38 +0200
+
+grep (2.25-5) unstable; urgency=medium
+
+  * Add debian/tests/upstream-test-suite-no-pcre3: run tests also under
+    unavailable pcre3.
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Sat, 02 Jul 2016 14:59:28 +0200
+
+grep (2.25-4) unstable; urgency=medium
+
+  * Remove deprecated cdbs patchsys-quilt (Closes: #825984)
+  * Remove not actually needed.
+    debian/tests/patches/01-test-Makefile-remove-PATH.patch.
+  * debian/tests/{control,upstream-test-suite}: Depends on locales-all instead
+    of trying to generate locale specific files.
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Thu, 02 Jun 2016 11:03:01 +0200
+
+grep (2.25-3) unstable; urgency=medium
+
+  * Add Build-Deps on quilt to make lintian happy
+  * Bump Standards-Version to 3.9.8
+  * Use Vcs-* secure links
+  * Bump debian/compat to 9
+  * Update debhelper (>= 9)
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Tue, 31 May 2016 19:41:32 +0200
+
+grep (2.25-2) unstable; urgency=medium
+
+  * Add debian/patches/upstream-90-language-test-suite.patch
+  * Changes to enable first autopkgtest test:
+    - debian/control: Add Testsuite: stanza
+    - debian/rules: Include cdbs patchsys-quilt.
+      Disable check-expensive. At least for the moment, let's use
+      non-expensive checks.
+    - debian/tests/upstream-test-suite: Try building binary packages.
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Tue, 31 May 2016 16:55:00 +0200
+
+grep (2.25-1) unstable; urgency=medium
+
+  * New upstream release.
+    - Treat all characters as valid in C or POSIX locales. Closes: #800670.
+  * Remove 80-587930-man-ere-reference.patch
+  * Update 81-356120-document-multiple-e.patch
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Fri, 22 Apr 2016 11:24:39 +0200
+
+grep (2.24-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Sat, 12 Mar 2016 12:21:28 +0100
+
+grep (2.23.7~9e28-1) experimental; urgency=medium
+
+  * debian/rules: set DEB_MAKE_CHECK_TARGET to run expensive tests on amd64
+    and i386 only, and cheap tests on any other architecture.
+  * Add 81-356120-document-multiple-e.patch to clarify information about
+    multiple -e and -f options. Closes: #356120.
+  * Updated 80-587930-man-ere-reference.patch to modify grep.texi.
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Fri, 04 Mar 2016 21:14:58 +0100
+
+grep (2.23-1) unstable; urgency=low
+
+  * New upstream release.
+  * Fix grep --exclude no longer works against arguments with a directory
+    name. Closes: #807641.
+  * Fix grep treats ISO-8859 text files as binary. Closes: #799956.
+  * Remove no longer needed 85-412370-F-x-documentation.patch.
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Mon, 15 Feb 2016 23:22:58 +0100
+
+grep (2.22-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Mon, 09 Nov 2015 14:31:36 +0100
+
+grep (2.21-2) unstable; urgency=low
+
+  * 80-587930-man-ere-reference.patch: Fix typo in man page (Closes: #779728).
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Sat, 16 May 2015 11:20:32 +0200
 
 grep (2.20-4.1) unstable; urgency=high
 
@@ -10,6 +130,41 @@ grep (2.20-4.1) unstable; urgency=high
   * Fix CVE-2015-1345: buffer overrun in src/kwset.c (closes: #776039).
 
  -- Michael Gilbert <mgilbert@debian.org>  Mon, 26 Jan 2015 02:56:14 +0000
+
+grep (2.21-1) experimental; urgency=low
+
+  * New upstream release (Uploading to experimental since Jessie is frozen).
+  * Fix handling of word boundaries in multibyte locales (Closes: #720482).
+  * Ignore regenerated files by automake via d/source/options. Remove
+    now obsolete d/patches/90-doc-Makefile-Mostlyclean-files.patch.
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Tue, 25 Nov 2014 09:06:46 +0100
+
+grep (2.21~pre-2.20.90-a07a4-2) experimental; urgency=low
+
+  * A cleaner d/patches/90-doc-Makefile-Mostlyclean-files.patch replaces
+    99-autotools-changes.patch. Needed to allow grep build twice in a row.
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Tue, 18 Nov 2014 17:55:11 +0100
+
+grep (2.21~pre-2.20.90-a07a4-1) experimental; urgency=low
+
+  * New upstream pre-release.
+  * Remove no longer need patches:
+    - 70-man_apostrophe.patch
+    - 04-446854-grep.1.patch
+    - 0001-build-avoid-Wstack-protector.patch
+    - 0001-grep-P-invalid-utf8-non-matching-debian.patch
+  * GREP_OPTIONS is obsolete now. grep warns its use (Closes: #411931).
+  * Bump Standards-Version to 3.9.6.
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Mon, 17 Nov 2014 16:05:53 +0100
+
+grep (2.20-4.1pexip1) pexip; urgency=low
+
+  * Migrate to Jessie
+
+ -- John-Mark Bell <jmb@pexip.com>  Wed, 22 Feb 2017 19:28:54 +0000
 
 grep (2.20-4) unstable; urgency=medium
 

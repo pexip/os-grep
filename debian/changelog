@@ -1,3 +1,9 @@
+grep (3.3-1pexip1) pexip; urgency=medium
+
+  * Migrate to Buster
+
+ -- Vincent Sanders <vince@pexip.com>  Fri, 28 Feb 2020 22:18:38 +0000
+
 grep (3.3-1) unstable; urgency=low
 
   * New upstream version 3.3.

@@ -1,5 +1,5 @@
 # Customize maint.mk                           -*- makefile -*-
-# Copyright (C) 2009-2016 Free Software Foundation, Inc.
+# Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,14 +12,21 @@
 # GNU General Public License for more details.
 
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Cause the tool(s) built by this package to be used also when running
+# commands via e.g., "make syntax-check".  Doing this a little sooner
+# would have avoided a grep infloop bug.
+ifeq ($(build_triplet), $(host_triplet))
+export PATH := $(builddir)/src$(PATH_SEPARATOR)$(PATH)
+endif
 
 # Used in maint.mk's web-manual rule
 manual_title = GNU Grep: Print lines matching a pattern
 
 # Use the direct link.  This is guaranteed to work immediately, while
 # it can take a while for the faster mirror links to become usable.
-url_dir_list = http://ftp.gnu.org/gnu/$(PACKAGE)
+url_dir_list = https://ftp.gnu.org/gnu/$(PACKAGE)
 
 # Tests not to run as part of "make distcheck".
 local-checks-to-skip =			\
@@ -27,6 +34,9 @@ local-checks-to-skip =			\
 
 # Tools used to bootstrap this package, used for "announcement".
 bootstrap-tools = autoconf,automake,gnulib
+
+# Override the default Cc: used in generating an announcement.
+announcement_Cc_ = $(translation_project_), $(PACKAGE)-devel@gnu.org
 
 # The tight_scope test gets confused about inline functions.
 # like 'to_uchar'.
@@ -55,7 +65,7 @@ export VERBOSE = yes
 # 1127556 9e
 export XZ_OPT = -6e
 
-old_NEWS_hash = 8fb34ff43c84222d1cd9d571eb0c4a03
+old_NEWS_hash = 7623f45d6e457629257ff9a9f8237673
 
 # Many m4 macros names once began with 'jm_'.
 # Make sure that none are inadvertently reintroduced.
@@ -76,10 +86,11 @@ sc_prohibit_echo_minus_en:
 # - tests involving long checksum lines, and
 # - the 'pr' test cases.
 LINE_LEN_MAX = 80
-FILTER_LONG_LINES =						\
-  /^[^:]*\.diff:[^:]*:@@ / d;					\
-  \|^[^:]*man/help2man:| d;			\
-  \|^[^:]*tests/misc/sha[0-9]*sum.*\.pl[-:]| d;			\
+FILTER_LONG_LINES =							\
+  /^[^:]*\.diff:[^:]*:@@ / d;						\
+  \|^[^:]*TODO:| d;							\
+  \|^[^:]*man/help2man:| d;						\
+  \|^[^:]*tests/misc/sha[0-9]*sum.*\.pl[-:]| d;				\
   \|^[^:]*tests/pr/|{ \|^[^:]*tests/pr/pr-tests:| !d; };
 sc_long_lines:
 	@files=$$($(VC_LIST_EXCEPT))					\

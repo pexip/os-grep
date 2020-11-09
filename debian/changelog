@@ -1,3 +1,33 @@
+grep (3.6-1) unstable; urgency=low
+
+   [ Debian Janitor ]
+  * Use secure URI in Homepage field.
+  * Bump debhelper from old 9 to 10.
+  * Set upstream metadata fields: Bug-Submit (from ./configure),
+    Repository.
+  * Set upstream metadata fields: Repository, Repository-Browse.
+
+  [ Santiago Ruano Rincón ]
+  * New upstream version 3.6
+  * update debian/gbp.conf
+  * Add debian/NEWS to document that GREP_OPTIONS no longer affects grep's
+    behaviour
+  * Use https in the debian/watch URL
+  * Remove Build-Deps on autotools-dev and dh-autoreconf. debhelper=10 enables
+    them by default
+  * Add Description: to d/patches/02-man_rgrep.patch
+  * Remove extra signatures in d/upstream/signing-key.asc
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Mon, 09 Nov 2020 21:37:02 +0100
+
+grep (3.4-1) unstable; urgency=low
+
+  * New upstream version 3.4
+  * Include debian/salsa-ci.yml
+  * Bump Standards-Version to 4.5.0
+
+ -- Santiago Ruano Rincón <santiago@debian.org>  Wed, 29 Jan 2020 10:31:53 +0100
+
 grep (3.3-1) unstable; urgency=low
 
   * New upstream version 3.3.

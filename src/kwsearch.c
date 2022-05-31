@@ -1,5 +1,5 @@
 /* kwsearch.c - searching subroutines using kwset for grep.
-   Copyright 1992, 1998, 2000, 2007, 2009-2018 Free Software Foundation, Inc.
+   Copyright 1992, 1998, 2000, 2007, 2009-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -43,14 +43,13 @@ struct kwsearch
   void *re;
 };
 
-/* Compile the -F style PATTERN, containing SIZE bytes.  Return a
-   description of the compiled pattern.  */
+/* Compile the -F style PATTERN, containing SIZE bytes that are
+   followed by '\n'.  Return a description of the compiled pattern.  */
 
 void *
-Fcompile (char *pattern, size_t size, reg_syntax_t ignored)
+Fcompile (char *pattern, size_t size, reg_syntax_t ignored, bool exact)
 {
   kwset_t kwset;
-  ptrdiff_t total = size;
   char *buf = NULL;
   size_t bufalloc = 0;
 
@@ -59,23 +58,12 @@ Fcompile (char *pattern, size_t size, reg_syntax_t ignored)
   char const *p = pattern;
   do
     {
-      ptrdiff_t len;
-      char const *sep = memchr (p, '\n', total);
-      if (sep)
-        {
-          len = sep - p;
-          sep++;
-          total -= (len + 1);
-        }
-      else
-        {
-          len = total;
-          total = 0;
-        }
+      char const *sep = rawmemchr (p, '\n');
+      ptrdiff_t len = sep - p;
 
       if (match_lines)
         {
-          if (eolbyte == '\n' && pattern < p && sep)
+          if (eolbyte == '\n' && pattern < p)
             p--;
           else
             {
@@ -94,45 +82,13 @@ Fcompile (char *pattern, size_t size, reg_syntax_t ignored)
         }
       kwsincr (kwset, p, len);
 
-      p = sep;
+      p = sep + 1;
     }
-  while (p);
+  while (p <= pattern + size);
 
   free (buf);
+
   ptrdiff_t words = kwswords (kwset);
-
-  if (match_icase)
-    {
-      /* For each pattern character C that has a case folded
-         counterpart F that is multibyte and so cannot easily be
-         implemented via translating a single byte, append a pattern
-         containing just F.  That way, if the data contains F, the
-         matcher can fall back on DFA.  For example, if C is 'i' and
-         the locale is en_US.utf8, append a pattern containing just
-         the character U+0131 (LATIN SMALL LETTER DOTLESS I), so that
-         Fexecute will use a DFA if the data contain U+0131.  */
-      mbstate_t mbs = { 0 };
-      char checked[NCHAR] = {0,};
-      for (p = pattern; p < pattern + size; p++)
-        {
-          unsigned char c = *p;
-          if (checked[c])
-            continue;
-          checked[c] = true;
-
-          wint_t wc = localeinfo.sbctowc[c];
-          wchar_t folded[CASE_FOLDED_BUFSIZE];
-
-          for (int i = case_folded_counterparts (wc, folded); 0 <= --i; )
-            {
-              char s[MB_LEN_MAX];
-              int nbytes = wcrtomb (s, folded[i], &mbs);
-              if (1 < nbytes)
-                kwsincr (kwset, s, nbytes);
-            }
-        }
-    }
-
   kwsprep (kwset);
 
   struct kwsearch *kwsearch = xmalloc (sizeof *kwsearch);
@@ -155,46 +111,24 @@ Fexecute (void *vcp, char const *buf, size_t size, size_t *match_size,
   char const *beg, *end, *mb_start;
   ptrdiff_t len;
   char eol = eolbyte;
-  struct kwsmatch kwsmatch;
-  size_t ret_val;
-  bool mb_check;
-  bool longest;
   struct kwsearch *kwsearch = vcp;
   kwset_t kwset = kwsearch->kwset;
-
-  if (match_lines)
-    mb_check = longest = false;
-  else
-    {
-      mb_check = localeinfo.multibyte & !localeinfo.using_utf8;
-      longest = mb_check | !!start_ptr | match_words;
-    }
+  bool mb_check = localeinfo.multibyte & !localeinfo.using_utf8 & !match_lines;
+  bool longest = (mb_check | !!start_ptr | match_words) & !match_lines;
 
   for (mb_start = beg = start_ptr ? start_ptr : buf; beg <= buf + size; beg++)
     {
+      struct kwsmatch kwsmatch;
       ptrdiff_t offset = kwsexec (kwset, beg - match_lines,
                                   buf + size - beg + match_lines, &kwsmatch,
                                   longest);
       if (offset < 0)
         break;
-      len = kwsmatch.size[0] - 2 * match_lines;
+      len = kwsmatch.size - 2 * match_lines;
 
-      if (kwsearch->words <= kwsmatch.index)
-        {
-          /* The data contain a multibyte character that matches
-             some pattern character that is a case folded counterpart.
-             Since the kwset code cannot handle this case, fall back
-             on the DFA code, which can.  */
-          if (! kwsearch->re)
-            {
-              fgrep_to_grep_pattern (&kwsearch->pattern, &kwsearch->size);
-              kwsearch->re = GEAcompile (kwsearch->pattern, kwsearch->size,
-                                         RE_SYNTAX_GREP);
-            }
-          return EGexecute (kwsearch->re, buf, size, match_size, start_ptr);
-        }
-
-      if (mb_check && mb_goback (&mb_start, beg + offset, buf + size) != 0)
+      size_t mbclen = 0;
+      if (mb_check
+          && mb_goback (&mb_start, &mbclen, beg + offset, buf + size) != 0)
         {
           /* We have matched a single byte that is not at the beginning of a
              multibyte character.  mb_goback has advanced MB_START past that
@@ -223,13 +157,21 @@ Fexecute (void *vcp, char const *buf, size_t size, size_t *match_size,
       if (! match_words)
         goto success;
 
-      /* Succeed if the preceding and following characters are word
-         constituents.  If the following character is not a word
-         constituent, keep trying with shorter matches.  */
-      char const *bol = memrchr (mb_start, eol, beg - mb_start);
-      if (bol)
-        mb_start = bol + 1;
-      if (! wordchar_prev (mb_start, beg, buf + size))
+      /* We need a preceding mb_start pointer.  Use the beginning of line
+         if there is a preceding newline.  */
+      if (mbclen == 0)
+        {
+          char const *nl = memrchr (mb_start, eol, beg - mb_start);
+          if (nl)
+            mb_start = nl + 1;
+        }
+
+      /* Succeed if neither the preceding nor the following character is a
+         word constituent.  If the preceding is not, yet the following
+         character IS a word constituent, keep trying with shorter matches.  */
+      if (mbclen > 0
+          ? ! wordchar_next (beg - mbclen, buf + size)
+          : ! wordchar_prev (mb_start, beg, buf + size))
         for (;;)
           {
             if (! wordchar_next (beg + len, buf + size))
@@ -239,12 +181,36 @@ Fexecute (void *vcp, char const *buf, size_t size, size_t *match_size,
                 else
                   goto success;
               }
+            if (!start_ptr && !localeinfo.multibyte)
+              {
+                if (! kwsearch->re)
+                  {
+                    fgrep_to_grep_pattern (&kwsearch->pattern, &kwsearch->size);
+                    kwsearch->re = GEAcompile (kwsearch->pattern,
+                                               kwsearch->size,
+                                               RE_SYNTAX_GREP, !!start_ptr);
+                  }
+                if (beg + len < buf + size)
+                  {
+                    end = rawmemchr (beg + len, eol);
+                    end++;
+                  }
+                else
+                  end = buf + size;
+
+                if (EGexecute (kwsearch->re, beg, end - beg, match_size, NULL)
+                    != (size_t) -1)
+                  goto success_match_words;
+                beg = end - 1;
+                break;
+              }
             if (!len)
               break;
-            offset = kwsexec (kwset, beg, --len, &kwsmatch, true);
-            if (offset != 0)
+
+            struct kwsmatch shorter_match;
+            if (kwsexec (kwset, beg, --len, &shorter_match, true) != 0)
               break;
-            len = kwsmatch.size[0];
+            len = shorter_match.size;
           }
 
       /* No word match was found at BEG.  Skip past word constituents,
@@ -252,20 +218,23 @@ Fexecute (void *vcp, char const *buf, size_t size, size_t *match_size,
          them could make things much slower.  */
       beg += wordchars_size (beg, buf + size);
       mb_start = beg;
-    } /* for (beg in buf) */
+    }
 
   return -1;
 
  success:
-  end = memchr (beg + len, eol, (buf + size) - (beg + len));
-  end = end ? end + 1 : buf + size;
+  if (beg + len < buf + size)
+    {
+      end = rawmemchr (beg + len, eol);
+      end++;
+    }
+  else
+    end = buf + size;
+ success_match_words:
   beg = memrchr (buf, eol, beg - buf);
   beg = beg ? beg + 1 : buf;
   len = end - beg;
  success_in_beg_and_len:;
-  size_t off = beg - buf;
-
   *match_size = len;
-  ret_val = off;
-  return ret_val;
+  return beg - buf;
 }

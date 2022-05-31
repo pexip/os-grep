@@ -1,6 +1,6 @@
 # pcre.m4 - check for libpcre support
 
-# Copyright (C) 2010-2018 Free Software Foundation, Inc.
+# Copyright (C) 2010-2020 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -8,7 +8,7 @@
 AC_DEFUN([gl_FUNC_PCRE],
 [
   AC_ARG_ENABLE([perl-regexp],
-    AC_HELP_STRING([--disable-perl-regexp],
+    AS_HELP_STRING([--disable-perl-regexp],
                    [disable perl-regexp (pcre) support]),
     [case $enableval in
        yes|no) test_pcre=$enableval;;

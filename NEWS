@@ -1,5 +1,124 @@
 GNU grep NEWS                                    -*- outline -*-
 
+* Noteworthy changes in release 3.6 (2020-11-08) [stable]
+
+** Changes in behavior
+
+  The GREP_OPTIONS environment variable no longer affects grep's behavior.
+  The variable was declared obsolescent in grep 2.21 (2014), and since
+  then any use had caused grep to issue a diagnostic.
+
+** Bug fixes
+
+  grep's DFA matcher performed an invalid regex transformation
+  that would convert an ERE like a+a+a+ to a+a+, which would make
+  grep a+a+a+ mistakenly match "aa".
+  [Bug#44351 introduced in grep 3.2]
+
+  grep -P now reports the troublesome input filename upon PCRE execution
+  failure.  Before, searching many files for something rare might fail with
+  just "exceeded PCRE's backtracking limit".  Now, it also reports which file
+  triggered the failure.
+
+
+* Noteworthy changes in release 3.5 (2020-09-27) [stable]
+
+** Changes in behavior
+
+  The message that a binary file matches is now sent to standard error
+  and the message has been reworded from "Binary file FOO matches" to
+  "grep: FOO: binary file matches", to avoid confusion with ordinary
+  output or when file names contain spaces and the like, and to be
+  more consistent with other diagnostics.  For example, commands
+  like 'grep PATTERN FILE | wc' no longer add 1 to the count of
+  matching text lines due to the presence of the message.  Like other
+  stderr messages, the message is now omitted if the --no-messages
+  (-s) option is given.
+
+  Two other stderr messages now use the typical form too.  They are
+  now "grep: FOO: warning: recursive directory loop" and "grep: FOO:
+  input file is also the output".
+
+  The --files-without-match (-L) option has reverted to its behavior
+  in grep 3.1 and earlier.  That is, grep -L again succeeds when a
+  line is selected, not when a file is listed.  The behavior in grep
+  3.2 through 3.4 was causing compatibility problems.
+
+** Bug fixes
+
+  grep -I no longer issues a spurious "Binary file FOO matches" line.
+  [Bug#33552 introduced in grep 2.23]
+
+  In UTF-8 locales, grep -w no longer ignores a multibyte word
+  constituent just before what would otherwise be a word match.
+  [Bug#43225 introduced in grep 2.28]
+
+  grep -i no longer mishandles ASCII characters that match multibyte
+  characters.  For example, 'LC_ALL=tr_TR.utf8 grep -i i' no longer
+  dumps core merely because 'i' matches 'İ' (U+0130 LATIN CAPITAL
+  LETTER I WITH DOT ABOVE) in Turkish when ignoring case.
+  [Bug#43577 introduced partly in grep 2.28 and partly in grep 3.4]
+
+  A performance regression with -E and many patterns has been mostly fixed.
+  "Mostly" as there is a performance tradeoff between Bug#22357 and Bug#40634.
+  [Bug#40634 introduced in grep 2.28]
+
+  A performance regression with many duplicate patterns has been fixed.
+  [Bug#43040 introduced in grep 3.4]
+
+  An N^2 RSS performance regression with many patterns has been fixed
+  in common cases (no backref, and no use of -o or --color).
+  With only 80,000 lines of /usr/share/dict/linux.words, the following
+  would use 100GB of RSS and take 3 minutes. With the fix, it used less
+  than 400MB and took less than one second:
+    head -80000 /usr/share/dict/linux.words > w; grep -vf w w
+  [Bug#43527 introduced in grep 3.4]
+
+** Build-related
+
+  "make dist" builds .tar.gz files again, as they are still used in
+  some barebones builds.
+
+
+* Noteworthy changes in release 3.4 (2020-01-02) [stable]
+
+** New features
+
+  The new --no-ignore-case option causes grep to observe case
+  distinctions, overriding any previous -i (--ignore-case) option.
+
+** Bug fixes
+
+  '.' no longer matches some invalid byte sequences in UTF-8 locales.
+  [bug introduced in grep 2.7]
+
+  grep -Fw can no longer false match in non-UTF-8 multibyte locales
+  For example, this command would erroneously print its input line:
+    echo ab | LC_CTYPE=ja_JP.eucjp grep -Fw b
+  [Bug#38223 introduced in grep 2.28]
+
+  The exit status of 'grep -L' is no longer incorrect when standard
+  output is /dev/null.
+  [Bug#37716 introduced in grep 3.2]
+
+  A performance bug has been fixed when grep is given many patterns,
+  each with no back-reference.
+  [Bug#33249 introduced in grep 2.5]
+
+  A performance bug has been fixed for patterns like '01.2' that
+  cause grep to reorder tokens internally.
+  [Bug#34951 introduced in grep 3.2]
+
+** Build-related
+
+  The build procedure no longer relies on any already-built src/grep
+  that might be absent or broken.  Instead, it uses the system 'grep'
+  to bootstrap, and uses src/grep only to test the build.  On Solaris
+  /usr/bin/grep is broken, but you can install GNU or XPG4 'grep' from
+  the standard Solaris distribution before building GNU Grep yourself.
+  [bug introduced in grep 2.8]
+
+
 * Noteworthy changes in release 3.3 (2018-12-20) [stable]
 
 ** Bug fixes
@@ -8,9 +127,9 @@ GNU grep NEWS                                    -*- outline -*-
   the following would print nothing (it should print the input line):
     echo 123-x|LC_ALL=C grep '.\bx'
   Using a multibyte locale, using certain regexp constructs (some ranges,
-  backreferences), or forcing use of the PCRE matcher via --perl-regexp (-P)
+  back-references), or forcing use of the PCRE matcher via --perl-regexp (-P)
   would avoid the bug.
-  [bug introduced in grep 2.3]
+  [bug introduced in grep 3.2]
 
 
 * Noteworthy changes in release 3.2 (2018-12-20) [stable]
@@ -201,7 +320,7 @@ GNU grep NEWS                                    -*- outline -*-
 
   grep -z would match strings it should not.  To trigger the bug, you'd
   have to use a regular expression including an anchor (^ or $) and a
-  feature like a range or a backreference, causing grep to forego its DFA
+  feature like a range or a back-reference, causing grep to forego its DFA
   matcher and resort to using re_search.  With a multibyte locale, that
   matcher could mistakenly match a string containing a newline.
   For example, this command:
@@ -434,7 +553,7 @@ GNU grep NEWS                                    -*- outline -*-
   Previously it was unreliable, and sometimes crashed or looped.
   [bug introduced in grep-2.16]
 
-  grep -P now works with -w and -x and backreferences. Before,
+  grep -P now works with -w and -x and back-references. Before,
   echo aa|grep -Pw '(.)\1' would fail to match, yet
   echo aa|grep -Pw '(.)\2' would match.
 
@@ -770,7 +889,7 @@ GNU grep NEWS                                    -*- outline -*-
   X{0,0} is implemented correctly.  It used to be a synonym of X{0,1}.
   [bug present since "the beginning"]
 
-  In multibyte locales, regular expressions including backreferences
+  In multibyte locales, regular expressions including back-references
   no longer exhibit quadratic complexity (i.e., they are orders
   of magnitude faster). [bug present since multi-byte character set
   support was introduced in 2.5.2]
@@ -928,7 +1047,7 @@ Version 2.5
   - The new option --line-buffered fflush on everyline.  There is a noticeable
     slow down when forcing line buffering.
 
-  - Back references  are now local to the regex.
+  - Back-references are now local to the regex.
     grep -e '\(a\)\1' -e '\(b\)\1'
     The last backref \1 in the second expression refer to \(b\)
 
@@ -1142,7 +1261,7 @@ necessary to track the evolution of the regex package, and since
 I was changing it anyway I decided to do a general cleanup.
 
 ========================================================================
-Copyright (C) 1992, 1997-2002, 2004-2018 Free Software Foundation, Inc.
+Copyright (C) 1992, 1997-2002, 2004-2020 Free Software Foundation, Inc.
 
   Copying and distribution of this file, with or without modification,
   are permitted in any medium without royalty provided the copyright

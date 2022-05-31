@@ -9,7 +9,7 @@ Build-Depends: autotools-dev, cdbs, debhelper (>= 9), dh-autoreconf, gettext, li
 Homepage: http://www.gnu.org/software/grep/
 Vcs-Git: https://salsa.debian.org/debian/grep.git
 Vcs-Browser: https://salsa.debian.org/debian/grep
-XS-Pexip-Upstream: http://ftp.debian.org/debian/ buster
+XS-Pexip-Upstream: http://deb.debian.org/debian/ bullseye
 
 Package: grep
 Architecture: any

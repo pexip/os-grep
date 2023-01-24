@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2020 Free Software Foundation, Inc.
+ * Copyright (C) 2008-2022 Free Software Foundation, Inc.
  * Written by Eric Blake and Bruno Haible
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -26,6 +26,11 @@ SIGNATURE_CHECK (memrchr, void *, (void const *, int, size_t));
 
 #include "zerosize-ptr.h"
 #include "macros.h"
+
+/* Work around GCC bug 101494.  */
+#if 4 < __GNUC__ + (3 <= __GNUC_MINOR__) && __GNUC__ < 12
+# pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 
 /* Calculating void * + int is not portable, so this wrapper converts
    to char * to make the tests easier to write.  */

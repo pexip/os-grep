@@ -1,10 +1,10 @@
 /* Traverse a file hierarchy.
 
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -250,12 +250,21 @@ typedef struct _ftsent {
 } FTSENT;
 
 __BEGIN_DECLS
-FTSENT  *fts_children (FTS *, int) __THROW _GL_ATTRIBUTE_NODISCARD;
-int      fts_close (FTS *) __THROW _GL_ATTRIBUTE_NODISCARD;
+
+ _GL_ATTRIBUTE_NODISCARD
+FTSENT  *fts_children (FTS *, int) __THROW;
+
+_GL_ATTRIBUTE_NODISCARD
+int      fts_close (FTS *) __THROW;
+
+_GL_ATTRIBUTE_NODISCARD
 FTS     *fts_open (char * const *, int,
                    int (*)(const FTSENT **, const FTSENT **))
-  __THROW _GL_ATTRIBUTE_NODISCARD;
-FTSENT  *fts_read (FTS *) __THROW _GL_ATTRIBUTE_NODISCARD;
+  _GL_ATTRIBUTE_DEALLOC (fts_close, 1) __THROW;
+
+_GL_ATTRIBUTE_NODISCARD
+FTSENT  *fts_read (FTS *) __THROW;
+
 int      fts_set (FTS *, FTSENT *, int) __THROW;
 __END_DECLS
 

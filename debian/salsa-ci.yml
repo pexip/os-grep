@@ -3,4 +3,6 @@ include:
   - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
 
 variables:
-  RELEASE: 'bullseye'
+  SALSA_CI_DISABLE_BUILD_PACKAGE_ARMEL: 0
+  SALSA_CI_DISABLE_BUILD_PACKAGE_ARMHF: 0
+  SALSA_CI_DISABLE_BUILD_PACKAGE_ARM64: 0

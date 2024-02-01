@@ -1,3 +1,9 @@
+grep (3.8-5+pexip24u3) pexip-bookworm; urgency=medium
+
+  * New versioning scheme
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Thu, 01 Feb 2024 16:00:08 +0000
+
 grep (3.8-5pexip2) pexip-bookworm; urgency=medium
 
   * Bookworm build for product distribution

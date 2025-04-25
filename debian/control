@@ -9,7 +9,7 @@ Build-Depends: cdbs, debhelper (>= 10~), gettext, libpcre2-dev, quilt, texinfo
 Homepage: https://www.gnu.org/software/grep/
 Vcs-Git: https://salsa.debian.org/debian/grep.git
 Vcs-Browser: https://salsa.debian.org/debian/grep
-XS-Pexip-Upstream: http://deb.debian.org/debian/ bookworm
+XS-Pexip-Upstream: http://deb.debian.org/debian/ trixie
 
 Package: grep
 Architecture: any
